@@ -8,12 +8,12 @@
                   [com.github.jknack/handlebars "1.0.0"]
 		  [compojure "1.1.5"]
                   [http-kit "2.1.10"]
-                  [com.taoensso/carmine "2.0.0-beta3"] ;;redis
+                  [com.taoensso/carmine "2.2.0"] ;;redis
                   [net.sf.json-lib/json-lib "2.4" :classifier "jdk15"] ;; XML -> JSON
                   [xom/xom "1.2.5"]
                   [com.cemerick/clojurescript.test "0.0.4"]
-                  [ring.middleware.logger "0.4.0"]]
-  :main darzana.core
+                  [ring.middleware.logger "0.4.0"]
+                  [org.slf4j/slf4j-log4j12 "1.7.5"]]
   :jvm-opts ["-XX:+TieredCompilation" "-XX:TieredStopAtLevel=1" "-Xverify:none"]
   :plugins [ [lein-ring "0.8.2"]
              [lein-ritz "0.7.0"]
@@ -23,12 +23,19 @@
   :resource-paths ["lib/*", "resources"]
   :cljsbuild
   {
+    :repl-listen-port 9000
+    :repl-launch-commands
+    {"phantom-naked" [ "phantomjs"
+                       "runners/repl.js"
+                       "resources/private/html/naked.html"
+                       :stdout ".repl-phantom-out"
+                       :stderr ".repl-phantom-err"]}
     :builds
     { :dev
       { :source-paths ["src/cljs"]
         :jar true
         :compiler
-        { :output-to "resources/public/js/S.js"
+        { :output-to "resources/public/js/main-debug.js"
           :optimizations :whitespace
           :pretty-print true}}
       :test

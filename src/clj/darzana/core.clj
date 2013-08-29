@@ -2,6 +2,7 @@
   (:use
     [compojure.core :as compojure :only (GET POST ANY defroutes)]
     [clojure.tools.nrepl.server :only (start-server stop-server)]
+    [clojure.tools.logging]
     [darzana.api :only (defapi)])
   (:require
     [clojure.string :as string]
@@ -11,7 +12,8 @@
     [taoensso.carmine :as car :refer (wcar)]
     [clojure.data.json :as json]
     [darzana.template :as darzana-template]
-    [darzana.router :as darzana-router])
+    [darzana.router :as darzana-router]
+    [darzana.context :as context])
   (:import
     [com.github.jknack.handlebars Handlebars Handlebars$SafeString Handlebars$Utils]
     [com.github.jknack.handlebars Helper]
@@ -34,28 +36,14 @@
           (json/write-str (.model (.context options)))
           ";document.write('<div class=\"darzana-debug\">' + Debug.formatJSON(DATA) + '</div>');"
           "Debug.collapsible($('.darzana-debug'), 'Debug Infomation');</script>")))))
-      
 
 (defmacro wcar* [& body]
   "Redis context wrapper"
   `(car/wcar {:pool {} :spec {:host "127.0.0.1" :port 6379}} ~@body))
 
-(def application-scope)
 (defn set-application-scope [scope]
-  (def application-scope scope))
-
-(defn- keyword-to-str [h]
-  (if (empty? h) h
-    (apply assoc {} (interleave (map name (keys h)) (vals h)))))
-
-(defn create-context [params]
-  { :application (keyword-to-str application-scope)
-    :params      (keyword-to-str params)
-    :page {}
-    :error {}})
-
-(defn merge-scope [context]
-  (apply merge (vals context)))
+  (dosync
+    (ref-set context/application-scope scope)))
 
 (defn replace-url-variable [url context]
   (string/replace url #":([A-Za-z_]\w*)" #(get context (second %) )))
@@ -115,9 +103,9 @@
         (if expire (car/expire cache-key expire))))))
 
 (defn- call-api-internal [context apis]
-  (for [result (doall (map #(execute-api (merge-scope context) %) apis))]
+  (for [result (doall (map #(execute-api (context/merge-scope context) %) apis))]
     (let [api (result :api)]
-      (println @(result :response))
+      (debug "API response" @(result :response))
       (if (result :from-cache) 
         (json/read-str (result :response)) ;; From Cache
         (let [ response (parse-response @(result :response))
@@ -127,35 +115,46 @@
               (cache-response response cache-key api)
               {:page {(name (api :name)) response}})
             { :error
-              {(name (api :name)) 
+              {(name (api :name))
                 { "status"   (-> result :response deref :status)
                   "message" response}}}))))))
 
-(defn merge-api-response [context api-responses]
-  (reduce (fn [ctx resp-ctx]
-            (reduce (fn [ctx scope]
-                      (reduce (fn [ctx api-response]
-                                (assoc-in ctx [(first scope) (first api-response)] (second api-response)))
-                        ctx (second scope)))
-              ctx resp-ctx))
-    context api-responses))
-
 (defn call-api [context apis]
   (let [api-responses (call-api-internal context apis)]
-    (merge-api-response context api-responses)))
+    (assoc context :scope
+      (reduce #(merge-with merge %1 %2) (context :scope) api-responses))))
 
 (defmacro if-success [context success error]
   `(if (empty? (~context :error))
      (-> ~context ~success)
      (-> ~context ~error)))
 
+(defn store-session [context session-key context-keys]
+  (assoc-in context [:session-add-keys session-key] context-keys))
+
+(defn- save-session [response context]
+  (let [ session (->
+                   (get-in context [:scope :session])
+                   (#(reduce dissoc % (context :session-remove-keys)))
+                   (#(reduce
+                       (fn [m k] (apply assoc m k)) %
+                       (for [[session-key context-keys] (context :session-add-keys)]
+                         [session-key (context/find-in-scopes context context-keys)]))))]
+    (if (empty? session)
+      response
+      (assoc response :session session))))
+
 (defn render [context template]
-  (println (merge-scope context))
-  (.apply (.compile handlebars template) (merge-scope context)))
+  (-> (ring.util.response/response (.apply (.compile handlebars template) (context/merge-scope context)))
+    (save-session context)))
 
 (defn redirect [context url]
-  (println (merge-scope context))
-  (ring.util.response/redirect url))
+  (-> (ring.util.response/redirect url)
+    (save-session context)))
+
+(defmacro defmarga [method url & exprs ]
+  `(~method ~url {:as request#}
+     (-> (context/create-context request#) ~@exprs)))
 
 (defn load-app-routes []
   (binding [*ns* (find-ns 'darzana.core)]
