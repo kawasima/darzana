@@ -156,12 +156,16 @@
   `(~method ~url {:as request#}
      (-> (context/create-context request#) ~@exprs)))
 
+(def route-namespace (ref nil))
+
 (defn load-app-routes []
-  (binding [*ns* (find-ns 'darzana.core)]
+  (if (nil? @route-namespace) (dosync (ref-set route-namespace *ns*)))
+  (binding [*ns* @route-namespace]
     (load-string
       (string/join " "
         (flatten 
-          [ "(compojure/defroutes app-routes"
+          [ "(use '[darzana.core] '[compojure.core :as compojure :only (GET POST PUT ANY defroutes)])"
+            "(defroutes app-routes"
             (map #(slurp %) @darzana-routes) ")"])))))
 
 (defn add-routes [route-path]
@@ -176,5 +180,4 @@
     (load-app-routes)
     (route/resources "/")
     (route/not-found "Not Found")))
-
 

@@ -20,7 +20,7 @@
              :params      (keyword-to-str (get request :params {}))
              :page        {}
              :error       {}}
-    :session-add-keys    []
+    :session-add-keys    {}
     :session-delete-keys []})
 
 (defn merge-scope [context]
