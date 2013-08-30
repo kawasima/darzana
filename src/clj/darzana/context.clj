@@ -26,9 +26,15 @@
 (defn merge-scope [context]
   (apply merge (vals (context :scope))))
 
-(defn find-in-scopes [context key]
+(defn- find-in-scopes-inner [context key]
   (first
     (filter #(not (nil? %))
       (for [name scope-priorities]
-          (get-in (context :scope) (flatten [name key]))))))
+        (get-in (context :scope) (flatten [name key]))))))
 
+(defn find-in-scopes
+  ([context key]
+    (find-in-scopes-inner context key))
+  ([context key not-found]
+    (let [value (find-in-scopes-inner context key)]
+      (if (nil? value) not-found value))))

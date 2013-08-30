@@ -22,3 +22,20 @@
 (deftest keyword-to-str-seq
   (testing "convert keyword to string."
     (is (= (keyword-to-str '(:a :b :c "d" :e)) '("a" "b" "c" "d" "e")))))
+
+(deftest merge-scope-normal
+  (testing "Merge scope normally."
+    (let [ctx (assoc-in (create-context {:session {} :params {}}) [:scope :session :a] 1)]
+      (is (= (merge-scope ctx) {:a 1})))))
+
+(deftest merge-scope-overwrite-context
+  (testing "Merge scope."
+    (let [ctx (assoc-in (create-context {:session {:a 3} :params {}}) [:scope :session :a] 1)]
+      (is (= (merge-scope ctx) {:a 1})))))
+
+(deftest merge-scope-priority
+  (testing "Merge scope."
+    (let [ctx (reduce #(apply assoc-in %1 %2) (create-context {:session {:a 2} :params {}})
+            [[[:scope :session :a] 1 ] [[:scope :params :a] 8]])]
+      (is (= (merge-scope ctx) {:a 8})))))
+

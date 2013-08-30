@@ -46,13 +46,13 @@
     (ref-set context/application-scope scope)))
 
 (defn replace-url-variable [url context]
-  (string/replace url #":([A-Za-z_]\w*)" #(get context (second %) )))
+  (string/replace url #":([A-Za-z_]\w*)" #(context/find-in-scopes context (second %) "")))
 
 (defn build-url [context api]
-  (str (replace-url-variable (api :url) context) 
-    "?"
+  (str (replace-url-variable (api :url) context)
+    (if (and (= (api :method) :get) (not-empty (api :query-keys))) "?")
     (string/join "&"
-      (map #(str (name %) "=" (get context (name %))) (:query-keys api)))))
+      (map #(str (name %) "=" (context/find-in-scopes context (name %))) (:query-keys api)))))
 
 (defn strip-content-type [f]
   (let [parts (string/split (if (nil? f) "" f) #"\s*;\s*")]
@@ -71,10 +71,11 @@
 (defn build-request-body [context api]
   (cond 
     (re-find #"/json$" (get api :content-type ""))
-    (json/write-str (into {} (filter #(some (set (map name (api :query-keys))) %) context)))
-    (not (= (api :method) :get))
+    (json/write-str
+      (reduce #(assoc %1 %2 (context/find-in-scopes context (name %2))) {} (api :query-keys)))
+    (not= (api :method) :get)
     (string/join "&"
-      (map #(str (name %) "=" (get context (name %))) (api :query-keys)))))
+      (map #(str (name %) "=" (context/find-in-scopes context (name %))) (api :query-keys)))))
     
 (defn execute-api [context api]
   (let [ url (build-url context api)
@@ -103,7 +104,7 @@
         (if expire (car/expire cache-key expire))))))
 
 (defn- call-api-internal [context apis]
-  (for [result (doall (map #(execute-api (context/merge-scope context) %) apis))]
+  (for [result (doall (map #(execute-api context %) apis))]
     (let [api (result :api)]
       (debug "API response" @(result :response))
       (if (result :from-cache) 
