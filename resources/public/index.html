@@ -1,19 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link href="http://cdn.alloyui.com/2.0.0pr5/aui-css/css/bootstrap.min.css" rel="stylesheet"></link>
-  <script src="http://cdn.alloyui.com/2.0.0pr5/aui/aui-min.js"></script>
+  <link href="/css/bootstrap.min.css" rel="stylesheet"></link>
+  <link href="/css/codemirror.css" rel="stylesheet"></link>
+  <link href="/css/font-awesome.css" rel="stylesheet"></link>
+  <link href="/css/pipe.css" rel="stylesheet"></link>
+  <script src="/js/jquery-1.10.2.min.js"></script>
+  <script src="/js/jquery-ui.min.js"></script>
+  <script src="/js/bootstrap.min.js"></script>
+  <script src="/js/underscore-min.js"></script>
+  <script src="/js/backbone-min.js"></script>
+  <script src="/js/handlebars.js"></script>
+  <script src="/js/handlebars-loader.js"></script>
+  <script src="/js/blockly_compressed.js"></script>
+  <script src="/js/codemirror.js"></script>
+  <script src="/js/codemirror/javascript.js"></script>
+  <script src="/js/codemirror/css.js"></script>
+  <script src="/js/codemirror/xml.js"></script>
+  <script src="/js/codemirror/htmlmixed.js"></script>
+  <script src="/js/codemirror/overlay.js"></script>
   <script src="/js/pipe.js"></script>
 </head>
 <body>
-  <button id="btn-save" class="aui-btn aui-btn-primary">Save</button>
-  <button id="btn-edit-template" class="aui-btn aui-btn-primary">Edit Template</button>
-  <div id="diagram-builder-bb">
-    <div id="diagram-builder-sn"></div>
+  <div id="header-toolbar" class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">Darzana</a>
+      </div>
+    </div>
   </div>
 
-  <div class="yui3-skin-sam">
-    <div id="modal-edit-template"></div>
+  <div id="content" class="container">
   </div>
 </body>
 </html>

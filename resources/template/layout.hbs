@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Latest compiled and minified CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="/js/jquery-1.10.2.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <!-- Latest Glyphicons minified CSS -->
+    <link href="/css/font-awesome.css" rel="stylesheet"/>
+    <link href="/css/docs.css" rel="stylesheet" type="text/css"/>
+  </head>
+  <body>
+    <div class="navbar navbar-inverse">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" >Pusna clojure</a>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      {{#block "content"}}
+      This will be default content that appears in a
+      deriving template if it does not declare a
+      replacement for the "content" section.
+      {{/block}}
+      <div class="row">{{debug}}</div>
+    </div>
+  </body>
+</html>
+

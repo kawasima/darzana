@@ -1,0 +1,21 @@
+{{#partial "content"}}
+<h1>グループ　一覧</h1>
+
+<div class="list-group">
+  {{#each groups.result.items}}
+  <div>
+    <a href="/groups/{{id}}">{{name}}</a>
+  </div>
+  {{/each}}
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="btn-group">
+      <a href="/groups/new" class="btn btn-info btn-info-dark"><i class="icon-edit"></i></a>
+      <a href="/groups/new" class="btn btn-info">New</a>
+    </div>
+  </div>
+</div>
+{{/partial}}
+{{> layout}}

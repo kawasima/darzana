@@ -1,0 +1,45 @@
+/* Using color scheme
+ * https://kuler.adobe.com/bollywood-color-theme-1747855/
+ */
+
+#content {
+    margin-top: 70px;
+}
+
+#header-toolbar {
+    background-color: #911247;
+    color: #f2bdef;
+}
+
+#header-toolbar .navbar-brand {
+    color: #f2bdef;
+}
+
+.CodeMirror {border: 1px solid black;}
+.cm-mustache {color: #0ca;}
+.navbar-btn {
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.btn-delete {
+    color: #bdc3c7;
+    text-decoration: none;
+}
+
+.btn-delete:hover {
+    cursor: pointer;
+    color: #e74c3c;
+    text-decoration: none;
+}
+
+.btn-add {
+    color: #2ecc71;
+    text-decoration: none;
+}
+
+.btn-add:hover {
+    cursor: pointer;
+    color: #27ae60;
+    text-decoration: none;
+}

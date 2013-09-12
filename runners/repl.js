@@ -5,7 +5,7 @@ if (phantom.args.length != 1) {
 
 var page = require('webpage').create();
 var url = phantom.args[0];
-var page_opened =false;
+var page_opened = false;
 
 page.onConsoleMessage = function(message) {
   console.log("App console: " + message);

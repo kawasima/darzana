@@ -1,0 +1,22 @@
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h4>List of template</h4>
+  </div>
+  <div class="panel-body">
+    <a class="icon-stack btn-add">
+      <i class="icon-circle-blank icon-stack-base"></i>
+      <i class="icon-plus"></i>
+    </a>
+  </div>
+  <ul class="list-group list-templates">
+    {{#each templates}}
+      <li class="list-group-item">
+        <a href="#template/{{path}}/edit">{{path}}</a>
+        <a class="icon-stack btn-delete pull-right">
+          <i class="icon-circle-blank icon-stack-base"></i>
+          <i class="icon-minus"></i>
+        </a>
+      </li>
+    {{/each}}
+  </ul>
+</div>

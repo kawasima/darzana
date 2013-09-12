@@ -176,9 +176,15 @@
   (defroutes routes
     (GET "/router/reload" []
       (do (load-routes) "reloaded."))
-    darzana-template/routes
-    darzana-router/routes
     (load-app-routes)
     (route/resources "/")
     (route/not-found "Not Found")))
+
+(def admin-app
+  (-> (defroutes routes
+        darzana-template/routes
+        darzana-router/routes
+        (route/resources "/")
+        (route/not-found "Not Found"))
+    (handler/site routes)))
 
