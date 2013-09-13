@@ -1,8 +1,14 @@
-(ns darzana.api)
+(ns darzana.api
+  (:use
+    [compojure.core :as compojure :only (GET POST PUT ANY defroutes)])
+  (:require
+    [clojure.data.json :as json]))
 
+(def apis (ref []))
 (defn create-api
   "create an api."
   [api]
+  (dosync (alter apis conj api))
   { :name (keyword api)
     :url ""
     :query-keys []
@@ -44,3 +50,8 @@
               ~@body)]
      (def ~api e#)))
 
+(defroutes routes
+  (compojure/context "/api" []
+    (GET "/" {}
+      { :headers {"Content-Type" "application/json"}
+        :body (json/write-str @apis)})))

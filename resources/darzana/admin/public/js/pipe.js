@@ -166,7 +166,7 @@ Blockly.Language.api = {
 
 Blockly.Language.redirect = {
     
-  helpUrl: 'http://www.example.com/',
+  helpUrl: '',
   init: function() {
       
     this.setColour(320);
@@ -183,9 +183,8 @@ Blockly.Language.redirect = {
 
 var templateDropdown;
 Blockly.Language.render = {
-  helpUrl: 'http://www.example.com/',
+  helpUrl: '',
   init: function() {
-    //templateDropdown = new Blockly.FieldDropdown([["dummy", "dummy"]]);
     this.setColour(340);
     this.appendDummyInput()
         .appendTitle("render");
@@ -200,7 +199,7 @@ Blockly.Language.render = {
 
 Blockly.Language.marga = {
     
-  helpUrl: 'http://www.example.com/',
+  helpUrl: '',
   init: function() {
       
     this.setColour(160);
@@ -252,27 +251,27 @@ CodeMirror.defineMode("mustache", function(config, parserConfig) {
 
 var Route = Backbone.Model.extend({
   urlRoot: function() {
-    return '/router/' + this.get('router');
+    return 'router/' + this.get('router');
   }
 });
 
 var RouteList = Backbone.Collection.extend({
   model: Route,
   url: function() {
-    return '/router/' + this.router + '/'; 
+    return 'router/' + this.router;
   }
 });
 
 var Template = Backbone.Model.extend({
-  url: function() {
-    return '/template/' + this.get('path');
+  urlRoot: function() {
+    return 'template';
   }
 });
 
 var TemplateList = Backbone.Collection.extend({
   model: Template,
   url: function() {
-    return '/template/'; 
+    return 'template'; 
   }
 });
 
@@ -335,6 +334,7 @@ var TemplateEditView = Backbone.View.extend({
   },
   initialize: function() {
     this.model = new Template({
+      id: this.options['path'],
       path: this.options['path']});
     this.model.on('change', this.render, this);
     this.model.fetch();
@@ -342,7 +342,7 @@ var TemplateEditView = Backbone.View.extend({
   render: function() {
     var template = Handlebars.TemplateLoader.get('template/edit');
     this.$el.html(template(this.model.toJSON()));
-    var myCodeMirror = CodeMirror.fromTextArea(
+    this.codeMirror = CodeMirror.fromTextArea(
       this.$("textarea[name=hbs]")[0],
       {
         mode: 'mustache',
@@ -350,9 +350,20 @@ var TemplateEditView = Backbone.View.extend({
       }
     );
   },
-  save: function() {
+  save: function(e) {
+    var self = this;
+    this.model.save("hbs", this.codeMirror.getValue(), {
+      success: function(model) {
+        self.$(".label-comm-status").removeClass("label-info").addClass("label-success").text("Saved!");
+
+        setTimeout(function() {
+          self.$(".label-comm-status").removeClass("label-success").text("");
+        }, 1500);
+      }
+    });
+    this.$(".label-comm-status").addClass("label-info").text("Saving...");
   },
-  back: function() {
+  back: function(e) {
     app.navigate("template", {trigger: true});
   }
 });
@@ -365,7 +376,7 @@ var RouteView = Backbone.View.extend({
   initialize: function() {
     var self = this;
     $.ajax({
-      url: '/router/',
+      url: 'router',
       success: function(data) {
         var options = _.map(data, function(routerFile) {
           return $("<option/>").text(routerFile.replace(/.clj$/,''));
@@ -520,7 +531,7 @@ var DarzanaApp = Backbone.Router.extend({
   }
 });
 
-Handlebars.TemplateLoader.config({prefix: "/hbs/"});
+Handlebars.TemplateLoader.config({prefix: "./hbs/"});
 Handlebars.TemplateLoader.load(["menu",
                                 "route/index", "route/list", "route/edit", "route/new",
                                 "template/list", "template/edit", "template/new"], {

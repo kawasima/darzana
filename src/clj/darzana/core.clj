@@ -23,7 +23,7 @@
 (def darzana-routes (ref []))
 
 (def handlebars
-  (Handlebars. (FileTemplateLoader. "resources/hbs")))
+  (Handlebars. (FileTemplateLoader. (@darzana-template/config :root))))
 
 (.registerHelper handlebars "debug"
   (reify Helper
@@ -33,7 +33,11 @@
           "<link rel=\"stylesheet\" href=\"/css/debug.css\"/>"
           "<script src=\"/js/debug.js\"></script>"
           "<script>var DATA="
-          (json/write-str (.model (.context options)))
+          (json/write-str (.model (.context options))
+            :value-fn
+            (fn [k v]
+              (cond (= (type v) net.sf.json.JSONNull) nil
+                :else v)))
           ";document.write('<div class=\"darzana-debug\">' + Debug.formatJSON(DATA) + '</div>');"
           "Debug.collapsible($('.darzana-debug'), 'Debug Infomation');</script>")))))
 
@@ -106,7 +110,7 @@
 (defn- call-api-internal [context apis]
   (for [result (doall (map #(execute-api context %) apis))]
     (let [api (result :api)]
-      (debug "API response" @(result :response))
+;;      (debug "API response" @(result :response))
       (if (result :from-cache) 
         (json/read-str (result :response)) ;; From Cache
         (let [ response (parse-response @(result :response))
@@ -170,21 +174,21 @@
             (map #(slurp %) @darzana-routes) ")"])))))
 
 (defn add-routes [route-path]
-  (dosync (alter darzana-routes conj route-path)))
+  (dosync (alter darzana-routes conj (darzana-router/make-path route-path))))
 
 (defn load-routes []
   (defroutes routes
     (GET "/router/reload" []
       (do (load-routes) "reloaded."))
-    (load-app-routes)
-    (route/resources "/")
-    (route/not-found "Not Found")))
+    (load-app-routes)))
+
+(def admin-routes
+  (compojure/routes
+    darzana-template/routes
+    darzana-router/routes
+    darzana.api/routes
+    (route/resources "/" {:root "darzana/admin/public"} )))
 
 (def admin-app
-  (-> (defroutes routes
-        darzana-template/routes
-        darzana-router/routes
-        (route/resources "/")
-        (route/not-found "Not Found"))
-    (handler/site routes)))
+  (handler/site admin-routes))
 

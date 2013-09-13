@@ -9,6 +9,11 @@
     [clojure.data.xml :as xml]
     [clojure.java.io :as io]))
 
+(def config (ref {:root "resources/router"}))
+
+(defn make-path [router]
+  (str (get @config :root) "/" router))
+
 (defmulti serialize-api (fn [x] (coll? x)))
 
 (defmethod serialize-api true [apis]
@@ -133,15 +138,15 @@
       { :headers {"Content-Type" "application/json"}
         :body (json/write-str
                 (map (fn [_] (.getName _))
-                  (filter #(.endsWith (.getName %) ".clj") (file-seq (io/file "resources/router"))))
+                  (filter #(.endsWith (.getName %) ".clj") (file-seq (io/file (get @config :root)))))
                 )})
 
-    (GET "/:router/" [router]
+    (GET "/:router" [router]
       { :headers {"Content-Type" "application/json"}
         :body (json/write-str
                 (map-indexed (fn [idx route] {:id idx :router router :method (nth route 1) :path (nth route 2)})
                   (read-string
-                    (str "[" (slurp  (str "resources/router/" router ".clj")) "]"))))})
+                    (str "[" (slurp  (str (get @config :root) "/" router ".clj")) "]"))))})
 
     (GET "/:router/:id" [router id]
       { :headers {"Content-Type" "application/json"}
@@ -149,7 +154,7 @@
                    :router router
                    :xml (serialize
                           (nth (read-string
-                                 (str "[" (slurp  (str "resources/router/" router ".clj")) "]")) (Integer. id)))})})
+                                 (str "[" (slurp  (str (get @config :root) "/" router ".clj")) "]")) (Integer. id)))})})
 
     (POST "/:router" [router :as r]
       (let [ request-body (json/read-str (slurp (r :body)))
@@ -163,7 +168,7 @@
           :body (json/write-str (assoc request-body :id (count routes)) request-body)}))
 
     (DELETE "/:router/:id" [router id :as r]
-      (let [ router-path (str "resources/router/" router ".clj")
+      (let [ router-path (str (get @config :root) "/" router ".clj")
              routes (read-string
                      (str "[" (slurp router-path) "]"))]
         (with-open [wrtr (io/writer router-path)]
@@ -175,7 +180,7 @@
 
     (PUT "/:router/:id" [router id :as r]
       (let [ request-body (json/read-str (slurp (r :body)))
-             router-path (str "resources/router/" router ".clj")
+             router-path (str (get @config :root) "/" router ".clj")
              routes (read-string
                      (str "[" (slurp router-path) "]"))
              updated-route (deserialize (xml/parse-str (get request-body "xml")))]
