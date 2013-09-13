@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [ [org.clojure/clojure "1.5.1"]
                   [org.clojure/tools.nrepl "0.2.2"]
-                  [com.github.jknack/handlebars "1.1.3-SNAPSHOT"]
+                  [com.github.jknack/handlebars "1.1.2"]
 		  [compojure "1.1.5"]
                   [http-kit "2.1.10"]
                   [com.taoensso/carmine "2.2.0"] ;;redis
