@@ -26,4 +26,4 @@
  "/groups/:id"
  (call-api [app/group])
  (render "groups/show"))
-(defmarga GET "/hoge")
+(defmarga GET "/juju")

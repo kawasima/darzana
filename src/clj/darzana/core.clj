@@ -2,9 +2,9 @@
   (:use
     [compojure.core :as compojure :only (GET POST ANY defroutes)]
     [clojure.tools.nrepl.server :only (start-server stop-server)]
-    [clojure.tools.logging]
     [darzana.api :only (defapi)])
   (:require
+    [clojure.tools.logging :as log]
     [clojure.string :as string]
     [compojure.handler :as handler]
     [compojure.route :as route]
@@ -52,11 +52,17 @@
 (defn replace-url-variable [url context]
   (string/replace url #":([A-Za-z_]\w*)" #(context/find-in-scopes context (second %) "")))
 
+(defn build-query-string [context api]
+  (string/join "&"
+    (map #(str (name %) "=" (context/find-in-scopes context (name %))) (:query-keys api))))
+
 (defn build-url [context api]
-  (str (replace-url-variable (api :url) context)
-    (if (and (= (api :method) :get) (not-empty (api :query-keys))) "?")
-    (string/join "&"
-      (map #(str (name %) "=" (context/find-in-scopes context (name %))) (:query-keys api)))))
+  (let [base-url (replace-url-variable (api :url) context)]
+    (if (= (api :method) :get)
+      (str base-url
+        (if-not (or (.contains base-url "?" ) (empty? (api :query-keys))) "?")
+        (build-query-string context api))
+      base-url)))
 
 (defn strip-content-type [f]
   (let [parts (string/split (if (nil? f) "" f) #"\s*;\s*")]
@@ -80,21 +86,34 @@
     (not= (api :method) :get)
     (string/join "&"
       (map #(str (name %) "=" (context/find-in-scopes context (name %))) (api :query-keys)))))
-    
+
+(defn build-request-headers [context api]
+  (merge {}
+    (when-let [content-type (api :content-type)] {"Content-Type" content-type})
+    (when (not (or (= (get api :method :get) :get) (contains? api :content-type))) {"Content-Type" "application/x-www-form-urlencoded"})
+    (when-let [token-name (api :oauth-token)]
+      (when-let [token (context/find-in-scopes context token-name)] {"Authorization" (str "Bearer " token)}))))
+
+(defn build-request [request context api]
+  (merge request
+    (when-let [basic-auth (api :basic-auth)]
+      {:basic-auth [ (context/find-in-scopes context (first  basic-auth))
+                     (context/find-in-scopes context (second basic-auth))]})
+    {:headers (build-request-headers context api)}
+    {:body (build-request-body context api)}))
+
 (defn execute-api [context api]
   (let [ url (build-url context api)
          cache (wcar* (car/get (str (api :name) "-" url)))]
-    (clojure.tools.logging/info url)
+    (log/info url)
     { :api api
       :url url
       :from-cache (not (empty? cache)) 
       :response (if cache
                   cache 
                   (http/request
-                       { :url url
-                         :method (get api :method :get)
-                         :headers {"Content-Type" (get api :content-type "application/x-www-form-urlencoded")}
-                         :body (build-request-body context api)} nil))}))
+                    (build-request {:url url :method (get api :method :get)} context api)
+                    nil))}))
 
 (defn find-api [apis name]
   (first
@@ -104,17 +123,19 @@
   (let [ expire (api :expire) ]
     (if (and (= (api :method) :get) expire) 
       (wcar*
-        (car/set cache-key (.toString response))
+        (car/set cache-key (json/write-str response))
         (if expire (car/expire cache-key expire))))))
 
 (defn- call-api-internal [context apis]
   (for [result (doall (map #(execute-api context %) apis))]
     (let [api (result :api)]
-;;      (debug "API response" @(result :response))
       (if (result :from-cache) 
-        (json/read-str (result :response)) ;; From Cache
+        (do
+          (log/debug "API response(from cache)" (result :response))
+          {:page {(name (api :name)) (json/read-str (result :response))} }) ;; From Cache
         (let [ response (parse-response @(result :response))
                cache-key (str (api :name) "-" (get-in @(result :response) [:opts :url]))]
+          (log/debug "API response" @(result :response))
           (if (apply (api :success?) [@(result :response)])
             (do
               (cache-response response cache-key api)
@@ -134,6 +155,14 @@
      (-> ~context ~success)
      (-> ~context ~error)))
 
+(defmacro if-contains
+  ([context key contains]
+    `(if-contains ~context ~key ~contains do))
+  ([context key contains not-contains]
+    `(if (context/find-in-scopes ~context ~key)
+       (-> ~context ~contains)
+       (-> ~context ~not-contains))))
+
 (defn store-session [context session-key context-keys]
   (assoc-in context [:session-add-keys session-key] context-keys))
 
@@ -144,14 +173,16 @@
                    (#(reduce
                        (fn [m k] (apply assoc m k)) %
                        (for [[session-key context-keys] (context :session-add-keys)]
-                         [session-key (context/find-in-scopes context context-keys)]))))]
+                         [(name session-key) (context/find-in-scopes context context-keys)]))))]
     (if (empty? session)
       response
       (assoc response :session session))))
 
-(defn render [context template]
-  (-> (ring.util.response/response (.apply (.compile handlebars template) (context/merge-scope context)))
-    (save-session context)))
+(defn render [ctx template]
+  (-> (ring.util.response/response (.apply (.compile handlebars template) (context/merge-scope ctx)))
+    (ring.util.response/content-type (context/find-in-scopes ctx :content-type "text/html"))
+    (ring.util.response/charset (context/find-in-scopes ctx :charset "UTF-8"))
+    (save-session ctx)))
 
 (defn redirect [context url]
   (-> (ring.util.response/redirect url)
@@ -187,8 +218,11 @@
     darzana-template/routes
     darzana-router/routes
     darzana.api/routes
+    (GET "*/" {params :params} (ring.util.response/redirect (str (params :*) "/index.html")))
     (route/resources "/" {:root "darzana/admin/public"} )))
 
-(def admin-app
-  (handler/site admin-routes))
-
+(defn admin-app [args]
+  (dosync
+    (alter darzana-router/config   assoc :root "dev-resources/router")
+    (alter darzana-template/config assoc :root "dev-resources/template"))
+  ((handler/site admin-routes) args))

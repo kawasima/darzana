@@ -1,6 +1,6 @@
 (defproject net.unit8/darzana "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :url "http://github.com/kawasima/darzana/"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [ [org.clojure/clojure "1.5.1"]
@@ -52,7 +52,7 @@
           :pretty-print false}}}
       :test-commands
     { "unit" ["runners/phantomjs.js" "target/cljs/testable.js"] }}
-  :ring {:handler darzana.core/admin-app }
+  :ring {:handler darzana.core/admin-app}
   :profiles
   {:dev {:dependencies [[ring-mock "0.1.3"]]}})
 

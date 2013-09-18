@@ -36,26 +36,20 @@ APIの設定はdefapiマクロを使って宣言的に書きます。
 ルーティングファイルはソースパス以外において、load-app-routes で読みこむようにしておくと、
 http://[darzana-host]/router/reload でルーティングファイルの更新を再読み込みできるようになります。
 
-mainファイルを書きます。
+Darzanaを使ったアプリケーションは、lein template を使って生成できます。
+~/.lein/profiles.clj ファイルに以下のように、プラグイン設定を追加します。
 
-    (ns example.core
-      (:use
-        [darzana.core :as darzana])
-      (:require
-        [org.httpkit.server :as httpkit]
-        [compojure.route :as route]
-        [compojure.handler :as handler]
-        [example.app :as app]
-        [ring.middleware.reload :as reload]))
-    (defn -main [& args]
-      (darzana/add-routes "resources/router/example-routes.clj")
-      (ns example.core) ;; lein run で実行するとnsがuserになってしまうのでそれを回避する
-      (darzana/load-routes)
-      (let [h (if (in-dev? args)
-          (reload-wrap-reload (handler/site #'darzana/routes))
-          (handler/site darzana/routes))]
-        (httpkit/run-server h {:port 8080})))
+    {:user {:plugins [[darzana/lein-template "0.1.0-SNAPSHOT"]]}}
 
+その後、lein コマンドで
+
+    lein new darzana [Your application]
+
+Ringサーバを起動すると、Twitterのタイムラインを表示するサンプルアプリケーションが開きます。
+
+    lein ring server
+
+http://localhost:3000/admin/ が管理アプリケーションのURLです。ここでルーティングやテンプレートの編集ができます。
 
 ## インタフェース仕様
 

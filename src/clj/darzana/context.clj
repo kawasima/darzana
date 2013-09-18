@@ -1,4 +1,6 @@
-(ns darzana.context)
+(ns darzana.context
+  (:require
+    [clojure.tools.logging :as log]))
 
 (def application-scope (ref {}))
 
@@ -27,14 +29,19 @@
   (apply merge (vals (context :scope))))
 
 (defn- find-in-scopes-inner [context key]
-  (first
-    (filter #(not (nil? %))
-      (for [name scope-priorities]
-        (get-in (context :scope) (flatten [name key]))))))
+  (let [keys (if (coll? key)
+               (map name key)
+               (name key))]
+    (first
+      (filter #(not (nil? %))
+        (for [scope-name scope-priorities]
+          (get-in (context :scope) (flatten [scope-name keys])))))))
 
 (defn find-in-scopes
   ([context key]
     (find-in-scopes-inner context key))
   ([context key not-found]
+    (log/debug "find-in-scope: " key)
     (let [value (find-in-scopes-inner context key)]
       (if (nil? value) not-found value))))
+

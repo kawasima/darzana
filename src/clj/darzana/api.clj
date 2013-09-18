@@ -13,16 +13,17 @@
     :url ""
     :query-keys []
     :method :get
-    :success? #(or
-                 (and
-                   (= (get-in % [:opts :method]) :get)
-                   (= (% :status) 200))
-                 (and
-                   (= (get-in % [:opts :method]) :post)
-                   (= (% :status) 201))
-                 (and
-                   (some #{:put :delete} [(get-in % [:opts :method])])
-                   (= (% :status) 204)))})
+    :success? (fn [response]
+                (or
+                  (and
+                    (= (get-in response [:opts :method]) :get)
+                    (= (response :status) 200))
+                   (and
+                     (= (get-in response [:opts :method]) :post)
+                     (some #(= (response :status) %) [200 201]))
+                   (and
+                     (some #{:put :delete} [(get-in response [:opts :method])])
+                     (some #(= (response :status) %) [200 204]))))})
 
 (defn url
   [api url]
@@ -44,6 +45,16 @@
   [api expire]
   (assoc api :expire expire))
 
+(defn oauth-token
+  [api oauth-token]
+  (assoc api :oauth-token oauth-token))
+
+(defn basic-auth
+  ([api id passwd]
+    (assoc api :basic-auth [id passwd]))
+  ([api id-passwd]
+    (assoc api :basic-auth id-passwd)))
+
 (defmacro defapi
   [api & body]
   `(let [e# (-> (create-api ~(name api))
@@ -54,4 +65,6 @@
   (compojure/context "/api" []
     (GET "/" {}
       { :headers {"Content-Type" "application/json"}
-        :body (json/write-str @apis)})))
+        :body (json/write-str
+                (map (fn [_] {:id _ :name _}) @apis))})))
+

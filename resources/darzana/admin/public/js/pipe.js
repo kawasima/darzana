@@ -17,6 +17,25 @@ Blockly.Language.if_success = {
     this.setTooltip('');
   }
 };
+
+Blockly.Language.if_contains = {
+  helpUrl: '',
+  init: function() {
+      
+    this.setColour(180);
+    this.appendDummyInput()
+        .appendTitle("if-contains");
+      
+    this.appendStatementInput('contains')
+        .appendTitle('YES');
+    this.appendStatementInput('not-contains')
+        .appendTitle('No');
+    this.setPreviousStatement(true);
+    this.setNextStatement(true);
+    this.setTooltip('');
+  }
+};
+
 Blockly.Language.call_api = {
   helpUrl: '',
   init: function() {
@@ -151,13 +170,14 @@ Blockly.Language.lists_create_with_item = {
     this.contextMenu = false;
   }
 };
+var apiDropdown;
 Blockly.Language.api = {
   helpUrl: '',
   init: function() {
       
     this.setColour(0);
     this.appendDummyInput()
-        .appendTitle(new Blockly.FieldDropdown([['groups', 'groups'], ['group', 'group']]),"api");
+        .appendTitle(apiDropdown(), "api");
     this.setInputsInline(true);
     this.setOutput(true, 'Array');      
     this.setTooltip('');
@@ -193,6 +213,27 @@ Blockly.Language.render = {
     this.setInputsInline(true);
     this.setPreviousStatement(true);
     this.setNextStatement(false);
+    this.setTooltip('');
+  }
+};
+
+Blockly.Language.store_session = {
+  helpUrl: '',
+  init: function() {     
+    this.setColour(180);
+    this.appendDummyInput()
+        .appendTitle("store-session");
+      
+    this.appendDummyInput()
+        .appendTitle("Session key")
+        .appendTitle(new Blockly.FieldTextInput(''), 'session_key');
+
+    this.appendDummyInput()
+        .appendTitle("Context key")
+        .appendTitle(new Blockly.FieldTextInput(''), 'context_key');
+
+    this.setPreviousStatement(true);
+    this.setNextStatement(true);
     this.setTooltip('');
   }
 };
@@ -272,6 +313,19 @@ var TemplateList = Backbone.Collection.extend({
   model: Template,
   url: function() {
     return 'template'; 
+  }
+});
+
+var API = Backbone.Model.extend({
+  urlRoot: function() {
+    return 'api';
+  }
+});
+
+var APIList = Backbone.Collection.extend({
+  model: API,
+  url: function() {
+    return 'api';
   }
 });
 
@@ -460,7 +514,13 @@ var RouteEditView = Backbone.View.extend({
       router: this.options['router']});
     this.model.on('change', this.render, this);
     this.availableTemplates = new TemplateList();
-    this.availableTemplates.on('reset', this.fetchRouter, this);
+    this.availableAPIs = new APIList();
+
+    this.availableTemplates.on('reset', function() {
+      this.availableAPIs.fetch({reset: true});
+    }, this);
+    this.availableAPIs.on('reset', this.fetchRouter, this);
+
     this.availableTemplates.fetch({reset: true});
   },
   render: function() {
@@ -472,8 +532,14 @@ var RouteEditView = Backbone.View.extend({
     templateDropdown = function() {
       return new Blockly.FieldDropdown(_.map(
         self.availableTemplates.toJSON(), function(hbs) {
-          return [hbs.path, hbs.path];
+          return [hbs.id, hbs.path];
         }));
+      };    
+    apiDropdown = function() {
+      return new Blockly.FieldDropdown([["", ""]].concat(_.map(
+        self.availableAPIs.toJSON(), function(api) {
+          return [api.id, api.name];
+        })));
       };
     Blockly.inject(document.getElementById('marga-blockly'),
                    {path: './', toolbox: document.getElementById('marga-toolbox')});
@@ -485,8 +551,16 @@ var RouteEditView = Backbone.View.extend({
   },
   save: function(e) {
     var xml = Blockly.Xml.workspaceToDom(Blockly.mainWorkspace);
-    this.model.set({xml: Blockly.Xml.domToText(xml)});
-    this.model.save();
+    this.model.save("xml", Blockly.Xml.domToText(xml), {
+      success: function(model) {
+        self.$(".label-comm-status").removeClass("label-info").addClass("label-success").text("Saved!");
+
+        setTimeout(function() {
+          self.$(".label-comm-status").removeClass("label-success").text("");
+        }, 1500);
+      }
+    });
+    this.$(".label-comm-status").addClass("label-info").text("Saving...");
   },
   back: function(e) {
     app.navigate("route/" + this.model.get('router'), {trigger: true});

@@ -12,7 +12,7 @@
 (def config (ref {:root "resources/router"}))
 
 (defn make-path [router]
-  (str (get @config :root) "/" router))
+  (str (get @config :root) "/" router ".clj"))
 
 (defmulti serialize-api (fn [x] (coll? x)))
 
@@ -49,6 +49,20 @@
     (if (empty? r) elm
       (conj elm [:next (serialize-component (first r) (rest r))]))))
 
+(defmethod serialize-component 'if-contains [s r]
+  (let [elm [:block {:type "if_contains"}
+                [:statement {:name "contains"} (serialize-component (nth s 1) nil)]
+                [:statement {:name "not-contains"} (serialize-component (nth s 2) nil)]]]
+    (if (empty? r) elm
+      (conj elm [:next (serialize-component (first r) (rest r))]))))
+
+(defmethod serialize-component 'store-session [s r]
+  (let [elm [:block {:type "store_session"}
+              [:title {:name "session_key"} (nth s 1)]
+              [:title {:name "context_key"} (nth s 2)]]]
+    (if (empty? r) elm
+      (conj elm [:next (serialize-component (first r) (rest r))]))))
+
 (defmethod serialize-component :default [s r] (throw (Exception. (str "Unknown component:" s))))
 
 (defn serialize-statement [sexp]
@@ -60,7 +74,7 @@
   (xml/emit-str
     (xml/sexp-as-element 
       [:xml {}
-        [:block {:type "marga" :x 20 :y 20}
+        [:block {:type "marga" :x 180 :y 20}
           [:title {:name "method"} (nth sexp 1)]
           [:title {:name "path"} (nth sexp 2)]
           (serialize-statement (drop 3 sexp))]])))
@@ -146,7 +160,7 @@
         :body (json/write-str
                 (map-indexed (fn [idx route] {:id idx :router router :method (nth route 1) :path (nth route 2)})
                   (read-string
-                    (str "[" (slurp  (str (get @config :root) "/" router ".clj")) "]"))))})
+                    (str "[" (slurp  (make-path router)) "]"))))})
 
     (GET "/:router/:id" [router id]
       { :headers {"Content-Type" "application/json"}
@@ -154,11 +168,11 @@
                    :router router
                    :xml (serialize
                           (nth (read-string
-                                 (str "[" (slurp  (str (get @config :root) "/" router ".clj")) "]")) (Integer. id)))})})
+                                 (str "[" (slurp  (make-path router)) "]")) (Integer. id)))})})
 
     (POST "/:router" [router :as r]
       (let [ request-body (json/read-str (slurp (r :body)))
-             router-path (str "resources/router/" router ".clj")
+             router-path (make-path router)
              routes (read-string
                      (str "[" (slurp router-path) "]"))]
         (with-open [wrtr (io/writer router-path)]
@@ -168,7 +182,7 @@
           :body (json/write-str (assoc request-body :id (count routes)) request-body)}))
 
     (DELETE "/:router/:id" [router id :as r]
-      (let [ router-path (str (get @config :root) "/" router ".clj")
+      (let [ router-path (make-path router)
              routes (read-string
                      (str "[" (slurp router-path) "]"))]
         (with-open [wrtr (io/writer router-path)]
@@ -180,7 +194,7 @@
 
     (PUT "/:router/:id" [router id :as r]
       (let [ request-body (json/read-str (slurp (r :body)))
-             router-path (str (get @config :root) "/" router ".clj")
+             router-path (make-path router)
              routes (read-string
                      (str "[" (slurp router-path) "]"))
              updated-route (deserialize (xml/parse-str (get request-body "xml")))]
