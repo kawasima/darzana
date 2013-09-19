@@ -51,17 +51,23 @@
 
 (defmethod serialize-component 'if-contains [s r]
   (let [elm [:block {:type "if_contains"}
-                [:statement {:name "contains"} (serialize-component (nth s 1) nil)]
-                [:statement {:name "not-contains"} (serialize-component (nth s 2) nil)]]]
+              [:title {:name "key"} (name (nth s 1))]
+              [:statement {:name "contains"} (serialize-component (nth s 2) nil)]
+              [:statement {:name "not-contains"} (serialize-component (nth s 3) nil)]]]
     (if (empty? r) elm
       (conj elm [:next (serialize-component (first r) (rest r))]))))
 
 (defmethod serialize-component 'store-session [s r]
   (let [elm [:block {:type "store_session"}
-              [:title {:name "session_key"} (nth s 1)]
-              [:title {:name "context_key"} (nth s 2)]]]
+              [:title {:name "session-key"} (name (nth s 1))]
+              [:title {:name "context-key"} (clojure.string/join " " (map name (nth s 2)))]]]
     (if (empty? r) elm
       (conj elm [:next (serialize-component (first r) (rest r))]))))
+
+(defmethod serialize-component '-> [s r]
+  (let [chain-block (rest s)]
+    (when (not-empty chain-block)
+      (serialize-component (first chain-block) (rest chain-block)))))
 
 (defmethod serialize-component :default [s r] (throw (Exception. (str "Unknown component:" s))))
 
@@ -91,12 +97,13 @@
   ([node tag-name attrs] (first (filter-children node tag-name attrs))))
 
 (def deserialize-block)
+
 (defn deserialize-statement [stmt]
   (seq (reduce #(apply conj %1 %2) []
        (map deserialize-block (get stmt :content)))))
 
 (defn deserialize-next [next]
-  (map deserialize-block (filter-children next :block)))
+  (first (map deserialize-block (filter-children next :block))))
 
 (defn get-text [node]
   (let [children (get node :content)]
@@ -104,6 +111,14 @@
 
 (defn deserialize-api-value [value]
   (deserialize-block (find-child value :block)))
+
+(defn deserialize-chained-block [chained-block]
+  (cond
+    (coll? chained-block) (if (> (count chained-block) 1)
+                            (seq (reduce conj ['->] chained-block))
+                            (first chained-block))
+    (nil? chained-block) (seq ['->])
+    :else chained-block))
 
 (defmulti deserialize-block (fn [block] (get-in block [:attrs :type])))
 
@@ -126,15 +141,30 @@
       (map deserialize-next (filter-children block :next)))))
 
 (defmethod deserialize-block "render" [block]
-  (seq ['render (get-text (find-child block :title))]))
+  [(seq ['render (get-text (find-child block :title))])])
 
 (defmethod deserialize-block "redirect" [block]
-  (seq ['redirect (get-text (find-child block :title))]))
+  [(seq ['redirect (get-text (find-child block :title))])])
 
 (defmethod deserialize-block "if_success" [block]
   (let [sexp (seq ['if-success
                     (deserialize-block (find-child (find-child block :statement {:name "success"}) :block))
                     (deserialize-block (find-child (find-child block :statement {:name "error"}) :block))])]
+    (reduce #(apply conj %1 %2) [sexp]
+      (map deserialize-next (filter-children block :next)))))
+
+(defmethod deserialize-block "if_contains" [block]
+  (let [sexp (seq ['if-contains
+                    (keyword (get-text (find-child block :title {:name "key"})))
+                    (deserialize-chained-block (deserialize-block (find-child (find-child block :statement {:name "contains"}) :block)))
+                    (deserialize-chained-block (deserialize-block (find-child (find-child block :statement {:name "not-contains"}) :block)))])]
+    (reduce #(apply conj %1 %2) [sexp]
+      (map deserialize-next (filter-children block :next)))))
+
+(defmethod deserialize-block "store_session" [block]
+  (let [sexp (seq ['store-session
+                    (keyword (get-text (find-child block :title {:name "session-key"})))
+                    (vec (map keyword (clojure.string/split (get-text (find-child block :title {:name "context-key"})) #"\s+")))])]
     (reduce #(apply conj %1 %2) [sexp]
       (map deserialize-next (filter-children block :next)))))
 

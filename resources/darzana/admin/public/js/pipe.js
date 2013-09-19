@@ -24,8 +24,10 @@ Blockly.Language.if_contains = {
       
     this.setColour(180);
     this.appendDummyInput()
-        .appendTitle("if-contains");
-      
+        .appendTitle("if-contains")
+        .appendTitle("key")
+        .appendTitle(new Blockly.FieldTextInput(''), 'key');
+
     this.appendStatementInput('contains')
         .appendTitle('YES');
     this.appendStatementInput('not-contains')
@@ -226,11 +228,11 @@ Blockly.Language.store_session = {
       
     this.appendDummyInput()
         .appendTitle("Session key")
-        .appendTitle(new Blockly.FieldTextInput(''), 'session_key');
+        .appendTitle(new Blockly.FieldTextInput(''), 'session-key');
 
     this.appendDummyInput()
         .appendTitle("Context key")
-        .appendTitle(new Blockly.FieldTextInput(''), 'context_key');
+        .appendTitle(new Blockly.FieldTextInput(''), 'context-key');
 
     this.setPreviousStatement(true);
     this.setNextStatement(true);
