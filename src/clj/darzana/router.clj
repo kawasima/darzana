@@ -13,7 +13,7 @@
     [darzana.workspace :as workspace]))
 
 (defn make-path
-  ([] (.. (fs/file (workspace/current-dir) "router") getPath))
+  ([] (.. (io/file (workspace/current-dir) "router") getPath))
   ([ws] (.. (io/file (@workspace/config :workspace) ws "router") getPath))
   ([ws router]
     (.. (io/file (@workspace/config :workspace) ws "router" (str router ".clj")) getPath)))

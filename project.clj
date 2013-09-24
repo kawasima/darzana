@@ -19,7 +19,7 @@
                   [org.slf4j/slf4j-log4j12 "1.7.5"]]
   :jvm-opts ["-XX:+TieredCompilation" "-XX:TieredStopAtLevel=1" "-Xverify:none"]
   :plugins [ [lein-ring "0.8.2"]
-             [lein-ritz "0.7.0"]
+;;             [lein-ritz "0.7.0"]
              [lein-cljsbuild "0.3.2"]]
   :source-paths ["src/clj"]
   :test-paths   ["test/clj"]

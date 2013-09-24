@@ -399,7 +399,9 @@ var TemplateListView = Backbone.View.extend({
     "click a.btn-delete": "deleteTemplate"
   },
   initialize: function() {
-    this.collection = new TemplateList();
+    this.collection = new TemplateList({
+      url: this.options['workspace'] + '/template'
+    });
     this.collection.on('reset',  this.render, this);
     this.collection.on('add',    this.render, this);
     this.collection.on('remove', this.render, this);

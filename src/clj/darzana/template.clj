@@ -13,10 +13,10 @@
     [com.github.jknack.handlebars.io FileTemplateLoader]))
 
 (defn make-path
-  ([] (.. (workspace/current-dir) getPath))
-  ([ws] (.. (io/file (@workspace/config :workspace ) ws) getPath))
+  ([] (.. (io/file (workspace/current-dir) "template") getPath))
+  ([ws] (.. (io/file (@workspace/config :workspace) ws "template")  getPath))
   ([ws template]
-    (.. (io/file (@workspace/config :workspace) ws template) getPath)))
+    (.. (io/file (@workspace/config :workspace) ws "template" template) getPath)))
 
 (def handlebars (ref (Handlebars. (FileTemplateLoader. (make-path)))))
 

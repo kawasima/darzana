@@ -12,4 +12,4 @@ pom.xml.asc
 *.class
 .lein-*
 .repl-*
-
+.nrepl-*

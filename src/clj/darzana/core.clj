@@ -2,7 +2,6 @@
   (:use
     [compojure.core :as compojure :only (GET POST ANY defroutes)]
     [clojure.tools.nrepl.server :only (start-server stop-server)]
-    [darzana.api :only (defapi)]
     [darzana.template :only (handlebars)]
     [darzana.router :only (load-app-routes)])
   (:require
@@ -15,9 +14,12 @@
     [taoensso.carmine :as car :refer (wcar)]
     [me.raynes.fs :as fs]
     [darzana.context :as context]
-    [darzana.workspace :as workspace])
+    [darzana.workspace :as workspace]
+    [darzana.api])
   (:import
     [net.sf.json.xml XMLSerializer]))
+
+(def default-response-parser (fn [body] (json/read-str body)))
 
 (defmacro wcar* [& body]
   "Redis context wrapper"
@@ -54,7 +56,8 @@
       (empty? body) {}
       (re-find #"/xml$"  content-type) (.read (XMLSerializer.) body) 
       (re-find #"/json$" content-type) (json/read-str body)
-      (re-find #"^text/plain$" content-type) body)))
+      (re-find #"^text/plain$" content-type) body
+      :else (default-response-parser body))))
 
 (defn build-request-body [context api]
   (cond 
