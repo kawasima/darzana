@@ -7,12 +7,30 @@
     [compojure.route :as route]
     [clojure.data.json :as json]
     [clojure.data.xml :as xml]
-    [clojure.java.io :as io]))
+    [clojure.java.io :as io]
+    [clojure.string :as string]
+    [me.raynes.fs :as fs]
+    [darzana.workspace :as workspace]))
 
-(def config (ref {:root "resources/router"}))
+(defn make-path
+  ([] (.. (fs/file (workspace/current-dir) "router") getPath))
+  ([ws] (.. (io/file (@workspace/config :workspace) ws "router") getPath))
+  ([ws router]
+    (.. (io/file (@workspace/config :workspace) ws "router" (str router ".clj")) getPath)))
 
-(defn make-path [router]
-  (str (get @config :root) "/" router ".clj"))
+(def route-namespace (ref nil))
+
+(defn load-app-routes []
+  (if (nil? @route-namespace) (dosync (ref-set route-namespace *ns*)))
+  (binding [*ns* @route-namespace]
+    (load-string
+      (string/join " "
+        (flatten 
+          [ "(use '[darzana.core] '[compojure.core :as compojure :only (GET POST PUT ANY defroutes)])"
+            "(defroutes app-routes"
+            (map #(slurp %)
+              (fs/glob (io/file (make-path)) "*.clj"))
+            ")"])))))
 
 (defmulti serialize-api (fn [x] (coll? x)))
 
@@ -155,9 +173,13 @@
 
 (defmethod deserialize-block "if_contains" [block]
   (let [sexp (seq ['if-contains
-                    (keyword (get-text (find-child block :title {:name "key"})))
-                    (deserialize-chained-block (deserialize-block (find-child (find-child block :statement {:name "contains"}) :block)))
-                    (deserialize-chained-block (deserialize-block (find-child (find-child block :statement {:name "not-contains"}) :block)))])]
+                    (-> block (find-child :title {:name "key"}) (get-text) (keyword))
+                    (-> block (find-child :statement {:name "contains"})
+                      (find-child :block) (deserialize-block)
+                      (deserialize-chained-block))
+                    (-> block (find-child :statement {:name "not-contains"})
+                      (find-child :block) (deserialize-block)
+                      (deserialize-chained-block))])]
     (reduce #(apply conj %1 %2) [sexp]
       (map deserialize-next (filter-children block :next)))))
 
@@ -176,33 +198,40 @@
 
 (defmethod deserialize :block [el] (deserialize-block el))
 
+(dosync (alter workspace/config update-in [:hook :change] conj
+          load-app-routes))
+
 (defroutes routes
-  (compojure/context "/router" []
+  (compojure/context "/router/:workspace" {{ws :workspace} :params}
     (GET "/" {}
       { :headers {"Content-Type" "application/json"}
         :body (json/write-str
                 (map (fn [_] (.getName _))
-                  (filter #(.endsWith (.getName %) ".clj") (file-seq (io/file (get @config :root)))))
-                )})
+                  (filter #(.endsWith (.getName %) ".clj") (file-seq (io/file (make-path ws))))))})
 
     (GET "/:router" [router]
       { :headers {"Content-Type" "application/json"}
         :body (json/write-str
-                (map-indexed (fn [idx route] {:id idx :router router :method (nth route 1) :path (nth route 2)})
+                (map-indexed (fn [idx route]
+                               { :id idx :router router
+                                 :workspace ws
+                                 :method (nth route 1) :path (nth route 2)})
                   (read-string
-                    (str "[" (slurp  (make-path router)) "]"))))})
+                    (str "[" (slurp  (make-path ws router)) "]"))))})
 
     (GET "/:router/:id" [router id]
       { :headers {"Content-Type" "application/json"}
-        :body (json/write-str { :id id
-                   :router router
-                   :xml (serialize
-                          (nth (read-string
-                                 (str "[" (slurp  (make-path router)) "]")) (Integer. id)))})})
+        :body (json/write-str
+                { :id id
+                  :router router
+                  :workspace ws
+                  :xml (serialize
+                         (nth (read-string
+                                (str "[" (slurp  (make-path ws router)) "]")) (Integer. id)))})})
 
     (POST "/:router" [router :as r]
       (let [ request-body (json/read-str (slurp (r :body)))
-             router-path (make-path router)
+             router-path (make-path ws router)
              routes (read-string
                      (str "[" (slurp router-path) "]"))]
         (with-open [wrtr (io/writer router-path)]
@@ -212,7 +241,7 @@
           :body (json/write-str (assoc request-body :id (count routes)) request-body)}))
 
     (DELETE "/:router/:id" [router id :as r]
-      (let [ router-path (make-path router)
+      (let [ router-path (make-path ws router)
              routes (read-string
                      (str "[" (slurp router-path) "]"))]
         (with-open [wrtr (io/writer router-path)]
@@ -224,7 +253,7 @@
 
     (PUT "/:router/:id" [router id :as r]
       (let [ request-body (json/read-str (slurp (r :body)))
-             router-path (make-path router)
+             router-path (make-path ws router)
              routes (read-string
                      (str "[" (slurp router-path) "]"))
              updated-route (deserialize (xml/parse-str (get request-body "xml")))]
@@ -232,6 +261,7 @@
           (doall
             (map-indexed (fn [idx route]
                            (pprint (if (= idx (Integer. id)) updated-route route) wrtr)) routes)))
-          { :headers {"Content-Type" "application/json"}
-            :body (json/write-str request-body)}))))
+        (workspace/commit-workspace (request-body "workspace") "Modify router.")
+        { :headers {"Content-Type" "application/json"}
+          :body (json/write-str request-body)}))))
 

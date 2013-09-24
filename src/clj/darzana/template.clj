@@ -5,50 +5,80 @@
     [compojure.handler :as handler]
     [compojure.route :as route]
     [clojure.java.io :as io]
-    [clojure.data.json :as json]))
+    [clojure.data.json :as json]
+    [darzana.workspace :as workspace])
+  (:import
+    [com.github.jknack.handlebars Handlebars Handlebars$SafeString Handlebars$Utils]
+    [com.github.jknack.handlebars Helper]
+    [com.github.jknack.handlebars.io FileTemplateLoader]))
 
-(def config (ref {:root "resources/template"}))
+(defn make-path
+  ([] (.. (workspace/current-dir) getPath))
+  ([ws] (.. (io/file (@workspace/config :workspace ) ws) getPath))
+  ([ws template]
+    (.. (io/file (@workspace/config :workspace) ws template) getPath)))
 
-(defn make-path [template]
-  (str (get @config :root) "/" template))
+(def handlebars (ref (Handlebars. (FileTemplateLoader. (make-path)))))
 
+(defn refresh-loader []  (. @handlebars with (into-array [(FileTemplateLoader. (make-path))])))
 
-(defn walk [dirpath pattern]
+(.registerHelper @handlebars "debug"
+  (reify Helper
+    (apply [this context options]
+      (Handlebars$SafeString.
+        (str
+          "<link rel=\"stylesheet\" href=\"/css/debug.css\"/>"
+          "<script src=\"/js/debug.js\"></script>"
+          "<script>var DATA="
+          (json/write-str (.model (.context options))
+            :value-fn
+            (fn [k v]
+              (cond (= (type v) net.sf.json.JSONNull) nil
+                :else v)))
+          ";document.write('<div class=\"darzana-debug\">' + Debug.formatJSON(DATA) + '</div>');"
+          "Debug.collapsible($('.darzana-debug'), 'Debug Infomation');</script>")))))
+
+(defn walk [dir pattern]
   (doall (filter #(re-matches pattern (.getName %))
-                 (file-seq (io/file dirpath)))))
+                 (file-seq dir))))
+
+(dosync (alter workspace/config update-in [:hook :change] conj
+          refresh-loader))
 
 (defroutes routes
-  (compojure/context "/template" []
-    (GET "/" {}
+  (compojure/context "/template/:workspace" {{ws :workspace} :params}
+    (GET "/" []
       { :headers {"Content-Type" "application/json"}
         :body (json/write-str
                 (map
-                 (fn [_] (let [ template-path (.getPath _)
-                                name (clojure.string/replace template-path
-                                       (re-pattern (str "^" (get @config :root) "/(.*?)\\.hbs$")) "$1")]
-                           { :path name
-                             :id   name
-                             :lastModified (.lastModified (io/file template-path))
-                             :size (.length (io/file template-path))}))
-                  (walk (get @config :root) #".*\.hbs")))})
+                  (fn [file]
+                    (let [ path (.getPath file)
+                           name (clojure.string/replace path
+                                  (re-pattern (str "^" (make-path ws) "/(.*?)\\.hbs$")) "$1")]
+                      { :path name
+                        :id   name
+                        :lastModified (.lastModified file)
+                        :size (.length file)}))
+                  (walk (io/file (make-path ws)) #".*\.hbs")))})
 
-    (GET "/*" {params :params}
-      (let [ template-path (make-path (str (params :*) ".hbs"))]
+    (GET "/*" {{ws :workspace template-name :*} :params}
+      (let [ path (make-path ws (str template-name ".hbs"))]
         { :headers {"Content-Type" "application/json; charset=UTF-8"}
           :body (json/write-str
-                  { :id (params :*)
-                    :path (params :*)
-                    :hbs  (slurp template-path)})}))
+                  { :id template-name
+                    :path template-name
+                    :hbs  (slurp path)})}))
 
     (PUT "/*" [:as r]
       (let [ request-body (json/read-str (slurp (r :body)))
-             template-path (make-path (str (get request-body "path") ".hbs"))]
-        (spit template-path (get request-body "hbs"))
+             path (make-path ws (str (request-body "path") ".hbs"))]
+        (spit path (request-body "hbs"))
+        (darzana.workspace/commit-workspace (request-body "workspace") "Modify template.")
         { :headers {"Content-Type" "application/json"}
           :body (json/write-str {:status "successful"})}))
 
     (POST "/" [:as r]
       (let [ request-body (json/read-str (slurp (r :body)))
-             template-path (make-path (str (get request-body "path") ".hbs"))]
-        (spit template-path ""))
+             path (make-path ws (str (request-body "path") ".hbs"))]
+        (spit path ""))
       { :headers {"Content-Type" "application/json; charset=UTF-8"}})))

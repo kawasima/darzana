@@ -3,11 +3,44 @@
     <h4>Manage components</h4>
   </div>
   <div class="panel-body">
-    Select menu.
+    <div class="alert alert-dismissable"> 
+      Current workspace: <span class="text-workspace">{{current.name}}<span>
+      <button type="button" class="btn btn-merge">
+        <i class="icon-code-fork"></i>
+        Merge workspace
+      </button>
+    </div>
+      
+    
+    <div class="select-container">
+      <div class="select-content">
+        <form class="form-inline">
+          <select name="workspace" class="form-control">
+            {{#each workspaces}}
+              <option value="{{name}}" {{selected ../workspace name}}>{{name}}</option>
+            {{/each}}
+          </select>
+        </form>
+      </div>
+    </div>
+    <div class="pull-right container-btn">
+      <a class="icon-stack btn-active">
+        <i class="icon-circle-blank icon-stack-base"></i>
+        <i class="icon-rocket"></i>
+      </a>
+      <a class="icon-stack btn-add">
+        <i class="icon-circle-blank icon-stack-base"></i>
+        <i class="icon-plus"></i>
+      </a>
+      <a class="icon-stack btn-delete">
+        <i class="icon-circle-blank icon-stack-base"></i>
+        <i class="icon-minus"></i>
+      </a>
+    </div>
   </div>
   <ul class="list-group">
-    <li class="list-group-item"><a href="#route">Router</a></li>
-    <li class="list-group-item"><a href="#template">Template</a></li>
-    <li class="list-group-item"><a href="#api">API</a></li>
+    <li class="list-group-item"><a href="#{{current}}/route">Router</a></li>
+    <li class="list-group-item"><a href="#{{current}}/template">Template</a></li>
+    <li class="list-group-item"><a href="#{{current}}/api">API</a></li>
   </ul>
 </div>

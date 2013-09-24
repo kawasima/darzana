@@ -4,6 +4,8 @@
 /checkouts
 /out
 /repl
+/repo
+/workspace
 pom.xml
 pom.xml.asc
 *.jar

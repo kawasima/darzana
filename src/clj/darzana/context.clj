@@ -23,7 +23,8 @@
              :page        {}
              :error       {}}
     :session-add-keys    {}
-    :session-delete-keys []})
+    :session-delete-keys []
+    :request request})
 
 (defn merge-scope [context]
   (apply merge (vals (context :scope))))

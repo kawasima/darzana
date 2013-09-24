@@ -2,44 +2,22 @@
   (:use
     [compojure.core :as compojure :only (GET POST ANY defroutes)]
     [clojure.tools.nrepl.server :only (start-server stop-server)]
-    [darzana.api :only (defapi)])
+    [darzana.api :only (defapi)]
+    [darzana.template :only (handlebars)]
+    [darzana.router :only (load-app-routes)])
   (:require
     [clojure.tools.logging :as log]
     [clojure.string :as string]
+    [clojure.data.json :as json]
     [compojure.handler :as handler]
     [compojure.route :as route]
     [org.httpkit.client :as http]
     [taoensso.carmine :as car :refer (wcar)]
-    [clojure.data.json :as json]
-    [darzana.template :as darzana-template]
-    [darzana.router :as darzana-router]
-    [darzana.context :as context])
+    [me.raynes.fs :as fs]
+    [darzana.context :as context]
+    [darzana.workspace :as workspace])
   (:import
-    [com.github.jknack.handlebars Handlebars Handlebars$SafeString Handlebars$Utils]
-    [com.github.jknack.handlebars Helper]
-    [com.github.jknack.handlebars.io FileTemplateLoader]
     [net.sf.json.xml XMLSerializer]))
-
-(def darzana-routes (ref []))
-
-(def handlebars
-  (Handlebars. (FileTemplateLoader. (@darzana-template/config :root))))
-
-(.registerHelper handlebars "debug"
-  (reify Helper
-    (apply [this context options]
-      (Handlebars$SafeString.
-        (str
-          "<link rel=\"stylesheet\" href=\"/css/debug.css\"/>"
-          "<script src=\"/js/debug.js\"></script>"
-          "<script>var DATA="
-          (json/write-str (.model (.context options))
-            :value-fn
-            (fn [k v]
-              (cond (= (type v) net.sf.json.JSONNull) nil
-                :else v)))
-          ";document.write('<div class=\"darzana-debug\">' + Debug.formatJSON(DATA) + '</div>');"
-          "Debug.collapsible($('.darzana-debug'), 'Debug Infomation');</script>")))))
 
 (defmacro wcar* [& body]
   "Redis context wrapper"
@@ -104,7 +82,8 @@
 
 (defn execute-api [context api]
   (let [ url (build-url context api)
-         cache (wcar* (car/get (str (api :name) "-" url)))]
+         cache (try (wcar* (car/get (str (api :name) "-" url)))
+                 (catch Exception e (log/debug "Skip cache-get" e)))]
     (log/info url)
     { :api api
       :url url
@@ -122,9 +101,11 @@
 (defn cache-response [response cache-key api]
   (let [ expire (api :expire) ]
     (if (and (= (api :method) :get) expire) 
-      (wcar*
-        (car/set cache-key (json/write-str response))
-        (if expire (car/expire cache-key expire))))))
+      (try
+        (wcar*
+          (car/set cache-key (json/write-str response))
+          (if expire (car/expire cache-key expire)))
+        (catch Exception e (log/debug "Skip cache-set" e))))))
 
 (defn- call-api-internal [context apis]
   (for [result (doall (map #(execute-api context %) apis))]
@@ -179,7 +160,7 @@
       (assoc response :session session))))
 
 (defn render [ctx template]
-  (-> (ring.util.response/response (.apply (.compile handlebars template) (context/merge-scope ctx)))
+  (-> (ring.util.response/response (.apply (.compile @handlebars template) (context/merge-scope ctx)))
     (ring.util.response/content-type (context/find-in-scopes ctx :content-type "text/html"))
     (ring.util.response/charset (context/find-in-scopes ctx :charset "UTF-8"))
     (save-session ctx)))
@@ -192,21 +173,6 @@
   `(~method ~url {:as request#}
      (-> (context/create-context request#) ~@exprs)))
 
-(def route-namespace (ref nil))
-
-(defn load-app-routes []
-  (if (nil? @route-namespace) (dosync (ref-set route-namespace *ns*)))
-  (binding [*ns* @route-namespace]
-    (load-string
-      (string/join " "
-        (flatten 
-          [ "(use '[darzana.core] '[compojure.core :as compojure :only (GET POST PUT ANY defroutes)])"
-            "(defroutes app-routes"
-            (map #(slurp %) @darzana-routes) ")"])))))
-
-(defn add-routes [route-path]
-  (dosync (alter darzana-routes conj (darzana-router/make-path route-path))))
-
 (defn load-routes []
   (defroutes routes
     (GET "/router/reload" []
@@ -215,14 +181,14 @@
 
 (def admin-routes
   (compojure/routes
-    darzana-template/routes
-    darzana-router/routes
+    darzana.template/routes
+    darzana.router/routes
     darzana.api/routes
+    darzana.workspace/routes
     (GET "*/" {params :params} (ring.util.response/redirect (str (params :*) "/index.html")))
     (route/resources "/" {:root "darzana/admin/public"} )))
 
 (defn admin-app [args]
-  (dosync
-    (alter darzana-router/config   assoc :root "dev-resources/router")
-    (alter darzana-template/config assoc :root "dev-resources/template"))
+  (load-file "dev-resources/api.clj")
+  (workspace/change-workspace "master")
   ((handler/site admin-routes) args))

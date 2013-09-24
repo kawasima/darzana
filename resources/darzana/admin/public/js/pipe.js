@@ -292,30 +292,39 @@ CodeMirror.defineMode("mustache", function(config, parserConfig) {
   return CodeMirror.overlayMode(CodeMirror.getMode(config, parserConfig.backdrop || "text/html"), mustacheOverlay);
 });
 
+var Workspace = Backbone.Model.extend({
+  urlRoot: 'workspace'
+});
+
+var WorkspaceList = Backbone.Collection.extend({
+  model: Workspace,
+  url: 'workspace'
+});
+
 var Route = Backbone.Model.extend({
   urlRoot: function() {
-    return 'router/' + this.get('router');
+    return 'router/' + this.get('workspace') + '/' + this.get('router');
+  },
+  validate: function(attrs, options) {
+    var dom = $($.parseXML(attrs.xml));
+    if (dom.find("xml > block").size() != 1) {
+        return "defmarga is only one.";
+    }
   }
 });
 
 var RouteList = Backbone.Collection.extend({
-  model: Route,
-  url: function() {
-    return 'router/' + this.router;
-  }
+  model: Route
 });
 
 var Template = Backbone.Model.extend({
   urlRoot: function() {
-    return 'template';
+    return 'template/' + this.get('workspace');
   }
 });
 
 var TemplateList = Backbone.Collection.extend({
-  model: Template,
-  url: function() {
-    return 'template'; 
-  }
+  model: Template
 });
 
 var API = Backbone.Model.extend({
@@ -333,12 +342,52 @@ var APIList = Backbone.Collection.extend({
 
 var MenuView = Backbone.View.extend({
   el: $('<div id="page-menu"/>'),
+  events: {
+    "change select[name=workspace]": "changeWorkspace",
+    "click a.btn-add": "newWorkspace"
+  },
   initialize: function() {
-      this.render();
+    this.workspace = this.options['workspace'];
+    this.workspaceList = new WorkspaceList();
+    this.workspaceList.on('reset', this.render, this);
+    this.workspaceList.on('add',   this.render, this);
+    this.workspaceList.on('remove',this.render, this);
+    this.workspaceList.fetch({reset: true});
   },
   render: function() {
     var template = Handlebars.TemplateLoader.get('menu');
-    this.$el.html(template({}));
+    this.$el.html(template({current: _.find(this.workspaceList.toJSON(),
+                                            function(el) { return el['current']; }),
+                            workspace: this.workspace,
+                            workspaces: this.workspaceList.toJSON()}));
+  },
+  newWorkspace: function() {
+    this.btnAdd = this.$(".container-btn > a.btn-add").remove();
+    this.$(".select-container").animate({width: "50%"}, 1000);
+    var input = $('<input type="text" name="name" class="form-control"/>');
+    var form = $('<form class="form-workspace-new"/>')
+      .on('submit', $.proxy(this.createWorkspace, this));
+    this.$(".container-btn")
+      .append(form.append(input))
+      .css({width: "40px"})
+      .animate({width: "50%"}, 1000, function() {
+        input.focus();
+      });
+  },
+  createWorkspace: function(event) {
+    var workspace = new Workspace({name: this.$(".form-workspace-new [name=name]").val()});
+    try {
+      this.workspaceList.add(workspace);
+      workspace.save();
+      this.$(".container-btn-add").empty().append(this.btnAdd);
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
+  },
+  changeWorkspace: function(event) {
+    var workspace = $(event.currentTarget).val();
+    app.navigate(workspace, {trigger: true});
   }
 });
 
@@ -415,12 +464,18 @@ var TemplateEditView = Backbone.View.extend({
         setTimeout(function() {
           self.$(".label-comm-status").removeClass("label-success").text("");
         }, 1500);
+      },
+      error: function(model, xhr, options) {
+        self.$(".label-comm-status").removeClass("label-info").addClass("label-error").text("Save failed!");
+        setTimeout(function() {
+          self.$(".label-comm-status").removeClass("label-error").text("");
+        }, 1500);
       }
     });
     this.$(".label-comm-status").addClass("label-info").text("Saving...");
   },
   back: function(e) {
-    app.navigate("template", {trigger: true});
+    app.navigate(this.options['workspace'] + "/template", {trigger: true});
   }
 });
 
@@ -432,7 +487,7 @@ var RouteView = Backbone.View.extend({
   initialize: function() {
     var self = this;
     $.ajax({
-      url: 'router',
+      url: 'router/' + this.options['workspace'],
       success: function(data) {
         var options = _.map(data, function(routerFile) {
           return $("<option/>").text(routerFile.replace(/.clj$/,''));
@@ -453,8 +508,8 @@ var RouteView = Backbone.View.extend({
   fetchRouter: function(event) {
     var router = $(event.target).val();
     if (!_.isEmpty(router)) {
-      app.navigate('#route/' + router);
-      new RouteListView({router: router});
+      app.navigate('#' + this.options['workspace'] + '/route/' + router);
+      new RouteListView({router: router, workspace: this.options['workspace']});
     }
   }
 });
@@ -466,8 +521,9 @@ var RouteListView = Backbone.View.extend({
     "click a.btn-delete": "deleteRoute"
   },
   initialize: function() {
-    this.collection = new RouteList();
-    this.collection.router = this.options['router'];
+    this.collection = new RouteList({}, {
+      url: 'router/' + this.options['workspace'] + '/' + this.options['router']
+    });
     this.collection.on('reset', this.render, this);
     this.collection.on('add', this.render, this);
     this.collection.on('remove', this.render, this);
@@ -504,6 +560,12 @@ var RouteListView = Backbone.View.extend({
   }
 });
 
+$.fn.label = function(type, msg) {
+  return this.removeClass("label-success label-info label-danger label-warning")
+    .addClass("label-" + type)
+    .text(msg);
+};
+
 var RouteEditView = Backbone.View.extend({
   el: $('<div id="page-route-edit"/>'),
   events: {
@@ -513,9 +575,16 @@ var RouteEditView = Backbone.View.extend({
   initialize: function() {
     this.model = new Route({
       id: this.options['id'],
+      workspace: this.options['workspace'],
       router: this.options['router']});
     this.model.on('change', this.render, this);
-    this.availableTemplates = new TemplateList();
+    this.model.on('invalid', function(model, error) {
+      this.$(".label-comm-status").label("danger", error);
+    }, this);
+    this.availableTemplates = new TemplateList({}, {
+      url: 'template/' + this.options['workspace']                                             
+    });
+      
     this.availableAPIs = new APIList();
 
     this.availableTemplates.on('reset', function() {
@@ -544,7 +613,10 @@ var RouteEditView = Backbone.View.extend({
         })));
       };
     Blockly.inject(document.getElementById('marga-blockly'),
-                   {path: './', toolbox: document.getElementById('marga-toolbox')});
+                   {path: './',
+                    toolbox: document.getElementById('marga-toolbox'),
+                    trashcan: false,
+                    collapse: false});
     var xml = Blockly.Xml.textToDom(this.model.get('xml'));
     Blockly.Xml.domToWorkspace(Blockly.mainWorkspace, xml);
   },
@@ -553,48 +625,59 @@ var RouteEditView = Backbone.View.extend({
   },
   save: function(e) {
     var xml = Blockly.Xml.workspaceToDom(Blockly.mainWorkspace);
+    this.$(".label-comm-status").label("info", "Saving...");
     this.model.save("xml", Blockly.Xml.domToText(xml), {
       success: function(model) {
-        self.$(".label-comm-status").removeClass("label-info").addClass("label-success").text("Saved!");
+        self.$(".label-comm-status").label("success", "Saved!");
 
         setTimeout(function() {
-          self.$(".label-comm-status").removeClass("label-success").text("");
+          self.$(".label-comm-status").label("default", "");
         }, 1500);
+      },
+      error:  function(model) {
+        self.$(".label-comm-status").label("label-error", "Save failed!");
+
+        setTimeout(function() {
+          self.$(".label-comm-status").label("default", "");
+        }, 1500);
+        console.log(model);
       }
     });
-    this.$(".label-comm-status").addClass("label-info").text("Saving...");
   },
   back: function(e) {
-    app.navigate("route/" + this.model.get('router'), {trigger: true});
+    app.navigate(this.options['workspace'] + "/route/" + this.model.get('router'), {trigger: true});
   }
 });
 
 var DarzanaApp = Backbone.Router.extend({
   routes: {
     "": "menu",
-    "route": "routeIndex",
-    "route/:router": "routeIndex",
-    "route/:router/:id/edit": "routeEdit",
-    "template": "templateList",
-    "template/*path/edit": "templateEdit"
+    ":workspace": "menu",
+    ":workspace/route": "routeIndex",
+    ":workspace/route/:router": "routeIndex",
+    ":workspace/route/:router/:id/edit": "routeEdit",
+    ":workspace/template": "templateList",
+    ":workspace/template/*path/edit": "templateEdit"
   },
   initialize: function() {
     this.currentView = null;
   },
-  menu: function() {
-    this.switchView(new MenuView());
+  menu: function(workspace) {
+    if (_.isUndefined(workspace))
+      workspace = "master";
+    this.switchView(new MenuView({workspace: workspace}));
   },
-  routeIndex: function(router) {
-    this.switchView(new RouteView({router: router}));
+  routeIndex: function(workspace, router) {
+    this.switchView(new RouteView({workspace: workspace, router: router}));
   },
-  routeEdit: function(router, id) {
-    this.switchView(new RouteEditView({id: id, router: router}));
+  routeEdit: function(workspace, router, id) {
+    this.switchView(new RouteEditView({workspace: workspace, id: id, router: router}));
   },
-  templateList: function() {
-    this.switchView(new TemplateListView());
+  templateList: function(workspace) {
+    this.switchView(new TemplateListView({workspace: workspace}));
   },
-  templateEdit: function(path) {
-    this.switchView(new TemplateEditView({path: path}));
+  templateEdit: function(workspace, path) {
+    this.switchView(new TemplateEditView({workspace: workspace, path: path}));
   },
   switchView: function(newView) {
     if (this.currentView)
@@ -607,6 +690,9 @@ var DarzanaApp = Backbone.Router.extend({
   }
 });
 
+Handlebars.registerHelper('selected', function(foo, bar) {
+  return foo == bar ? 'selected="selected"' : '';
+});
 Handlebars.TemplateLoader.config({prefix: "./hbs/"});
 Handlebars.TemplateLoader.load(["menu",
                                 "route/index", "route/list", "route/edit", "route/new",
