@@ -16,11 +16,12 @@
                   [org.clojure/data.xml "0.0.7"]
                   [com.cemerick/clojurescript.test "0.0.4"]
                   [ring.middleware.logger "0.4.0"]
-                  [org.slf4j/slf4j-log4j12 "1.7.5"]]
+                  [org.slf4j/slf4j-log4j12 "1.7.5"]
+                  [com.taoensso/tower "2.0.0-beta5"]
+                  [jayq "2.4.0"]]
   :jvm-opts ["-XX:+TieredCompilation" "-XX:TieredStopAtLevel=1" "-Xverify:none"]
   :plugins [ [lein-ring "0.8.2"]
-;;             [lein-ritz "0.7.0"]
-             [lein-cljsbuild "0.3.2"]]
+             [lein-cljsbuild "0.3.3"]]
   :source-paths ["src/clj"]
   :test-paths   ["test/clj"]
   :resource-paths ["lib/*", "resources"]
@@ -39,11 +40,24 @@
                         :stdout ".repl-phantom-out"
                         :stderr ".repl-phantom-err"]}
     :builds
-    { :dev
+    { :prod
       { :source-paths ["src/cljs"]
         :jar true
         :compiler
-        { :output-to "resources/public/js/main-debug.js"
+        { :output-to "resources/darzana/admin/public/js/main.min.js"
+          :optimizations :advanced
+          :externs [ "externs/darzana-externs.js"
+                     "externs/jquery-1.9.js"
+                     "externs/codemirror-externs.js"
+                     "externs/handlebars-externs.js"
+                     "externs/backbone-1.0.0-externs.js"]
+          :pretty-print true
+          }}
+      :dev
+      { :source-paths ["src/cljs"]
+        :jar true
+        :compiler
+        { :output-to "resources/darzana/admin/public/js/main.js"
           :optimizations :whitespace
           :pretty-print true}}
       :test

@@ -57,6 +57,7 @@
                                   (re-pattern (str "^" (make-path ws) "/(.*?)\\.hbs$")) "$1")]
                       { :path name
                         :id   name
+                        :workspace ws
                         :lastModified (.lastModified file)
                         :size (.length file)}))
                   (walk (io/file (make-path ws)) #".*\.hbs")))})
@@ -67,6 +68,7 @@
           :body (json/write-str
                   { :id template-name
                     :path template-name
+                    :workspace ws
                     :hbs  (slurp path)})}))
 
     (PUT "/*" [:as r]

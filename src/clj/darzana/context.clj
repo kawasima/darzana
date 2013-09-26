@@ -21,9 +21,8 @@
              :session     (get request :session {})
              :params      (keyword-to-str (get request :params {}))
              :page        {}
-             :error       {}}
-    :cookie-add-keys     {}
-    :cookie-delete-keys  []
+             :error       {}
+             :cookie      {}}
     :session-add-keys    {}
     :session-delete-keys []
     :request request})

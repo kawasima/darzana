@@ -256,7 +256,26 @@ Blockly.Language.marga = {
   }
 };
 
-Blockly.Language.switch_ab = {
+Blockly.Language.ab_testing_participate = {
+  helpUrl: '',
+  init: function() {
+      
+    this.setColour(160);
+    this.appendDummyInput().appendTitle("A/B testing");
+    this.appendDummyInput()
+        .appendTitle("Test ID")
+        .appendTitle(new Blockly.FieldTextInput(''), 'test-id');
+    this.appendStatementInput('test-b')
+        .appendTitle("Test B")
+        .appendTitle(new Blockly.FieldTextInput('90'));
+    this.setPreviousStatement(true);
+    this.setNextStatement(true);
+
+    this.setTooltip('');
+  }
+};
+
+Blockly.Language.ab_testing_convert = {
   helpUrl: '',
   init: function() {
       

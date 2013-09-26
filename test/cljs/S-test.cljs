@@ -1,8 +1,10 @@
 (ns darzana.sexp.test
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test runtests testing)])
   (:require 
-    [cemerick.cljs.test :as t]
-    [darzana.sexp :as sexp]))
+    [cemerick.cljs.test :as t]))
 
-(deftest test-parse-routes
-  (is (= (sexp/parse-routers '("L" ("L" "'GET" "/hoge" {"'params" "params"} ("L" "'let" ("V" "'context" ("L" "'create-context" "'params")))))) {})))
+(deftest test-if-success
+  (is (= (Blockly.Language/if_success :help_url) "")))
+
+(deftest test-backbone
+  (println (new darzana.model.Template)))
