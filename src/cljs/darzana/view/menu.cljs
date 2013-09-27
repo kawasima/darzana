@@ -23,7 +23,7 @@
             (.on workspaceList "add"    (.-render me) me)
             (.on workspaceList "delete" (.-render me) me)
             (set! (.-workspaceList me) workspaceList)
-            (.fetch workspaceList (js-obj :reset true)))
+            (.fetch workspaceList (js-obj "reset" true)))
           ))
 
       "render"

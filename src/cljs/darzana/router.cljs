@@ -2,6 +2,7 @@
   (:use
     [darzana.view.menu :only (MenuView)]
     [darzana.view.template :only (TemplateListView TemplateEditView)]
+    [darzana.view.route :only (RouteView RouteEditView)]
     [jayq.core :only ($)]))
 
 (def Application
@@ -31,6 +32,25 @@
                 (if (empty? workspace)
                   "master"
                   workspace))))))
+
+      "routeIndex"
+      (fn [workspace router]
+        (this-as me
+          (.switchView me
+            (RouteView.
+              (js-obj
+                "workspace" workspace
+                "router" router)))))
+
+      "routeEdit"
+      (fn [workspace router id]
+        (this-as me
+          (.switchView me
+            (RouteEditView.
+              (js-obj
+                "workspace" workspace
+                "router" router
+                "id" id)))))
 
       "templateList"
       (fn [workspace]

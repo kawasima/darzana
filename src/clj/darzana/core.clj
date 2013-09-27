@@ -21,6 +21,9 @@
 
 (def default-response-parser (fn [body] (json/read-str body)))
 
+(defmacro defblock [block-name & body]
+  `(aset js/Blockly.Language ~(name block-name) ~@body))
+
 (defmacro wcar* [& body]
   "Redis context wrapper"
   `(car/wcar {:pool {} :spec {:host "127.0.0.1" :port 6379}} ~@body))

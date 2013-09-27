@@ -18,6 +18,8 @@
                   [ring.middleware.logger "0.4.0"]
                   [org.slf4j/slf4j-log4j12 "1.7.5"]
                   [com.taoensso/tower "2.0.0-beta5"]
+                  ;; for clojurescript
+                  [org.clojure/clojurescript "0.0-1896"]
                   [jayq "2.4.0"]]
   :jvm-opts ["-XX:+TieredCompilation" "-XX:TieredStopAtLevel=1" "-Xverify:none"]
   :plugins [ [lein-ring "0.8.2"]
@@ -48,8 +50,10 @@
           :optimizations :advanced
           :externs [ "externs/darzana-externs.js"
                      "externs/jquery-1.9.js"
+                     "externs/blockly-externs.js"
                      "externs/codemirror-externs.js"
                      "externs/handlebars-externs.js"
+                     "externs/underscore-externs.js"
                      "externs/backbone-1.0.0-externs.js"]
           :pretty-print true
           }}
