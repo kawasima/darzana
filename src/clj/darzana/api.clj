@@ -1,10 +1,20 @@
 (ns darzana.api
-  (:use
-    [compojure.core :as compojure :only (GET POST PUT ANY defroutes)])
-  (:require
-    [clojure.data.json :as json]))
+  (require
+    [darzana.context :as context]
+    [oauth.client :as oauth]
+    [oauth.signature :as sig]))
 
 (def apis (ref []))
+
+(def => 'key-mapping)
+
+(defn keymap
+  ([from to]
+    [from to])
+  ([from arrow to]
+    (if (= arrow 'key-mapping)
+      (keymap from to))))
+
 (defn create-api
   "create an api."
   [api]
@@ -39,7 +49,10 @@
 
 (defn query-keys
   [api & fields]
-  (assoc api :query-keys (vec fields)))
+  (assoc api :query-keys
+    (map #(cond
+            (keyword? %) (keymap % %)
+            (vector?  %) %) fields)))
 
 (defn expire
   [api expire]
@@ -55,16 +68,46 @@
   ([api id-passwd]
     (assoc api :basic-auth id-passwd)))
 
+(defn oauth-1-authorization
+  [api & oauth-params]
+  (assoc api :oauth-1-authorization
+    (reduce conj {} (map (fn [_] [(second _) (first _)]) oauth-params))))
+
 (defmacro defapi
   [api & body]
   `(let [e# (-> (create-api ~(name api))
               ~@body)]
      (def ~api e#)))
 
-(defroutes routes
-  (compojure/context "/api" []
-    (GET "/" {}
-      { :headers {"Content-Type" "application/json"}
-        :body (json/write-str
-                (map (fn [_] {:id _ :name _}) @apis))})))
+
+(defn build-request-headers [context api]
+  (merge {}
+    (when-let [content-type (api :content-type)]
+      {"Content-Type" content-type})
+    (when (not (or (= (get api :method :get) :get)
+                 (contains? api :content-type)))
+      {"Content-Type" "application/x-www-form-urlencoded"})
+    (when-let [token-name (api :oauth-token)]
+      (when-let [token (context/find-in-scopes context token-name)]
+        {"Authorization" (str "Bearer " token)}))
+    (when-let [oauth1 (api :oauth-1-authorization)]
+      (let [ consumer-key (context/find-in-scopes context (oauth1 :oauth_consumer_key))
+             consumer-secret (context/find-in-scopes context (oauth1 :oauth_consumer_key))
+             consumer (oauth/make-consumer consumer-key consumer-secret nil nil nil :hmac-sha1)
+             unsigned-params (sig/oauth-params consumer (sig/rand-str 30) (sig/msecs->secs (System/currentTimeMillis)))
+             unsigned-params (if-let [callback-uri (oauth1 :oauth_callback)]
+                               (assoc unsigned-params :oauth_callback
+                                 (context/find-in-scopes context callback-uri))
+                               unsigned-params)
+             signature (sig/sign
+                         consumer
+                         (sig/base-string
+                           (-> (get api :method :get) sig/as-str clojure.string/upper-case)
+                           (api :url) unsigned-params)
+                         (if-let [token-secret (oauth1 :token_secret)]
+                           (context/find-in-scopes context token-secret)
+                           nil)) ]
+        {"Authorization" (oauth/authorization-header
+                           (merge unsigned-params {:oauth_signature signature}) "")}))))
+
 

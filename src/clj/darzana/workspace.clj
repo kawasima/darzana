@@ -24,7 +24,7 @@
     (doseq [f (fs/glob (io/file (@config :initial-resources)) "*")]
       (if (fs/directory? f)
         (fs/copy-dir f (.. master getRepository getWorkTree))
-        (fs/copy f (.. master getRepository getWorkTree))))
+        (fs/copy f (io/file (.. master getRepository getWorkTree) (. f getName)))))
     (git-add master ".")
     (git-commit master "Initial commit")
     (-> master
@@ -79,6 +79,7 @@
 
 (defn change-workspace [name]
   (make-workspace name)
+  (println "change-workspace" name)
   (dosync
     (alter config assoc :current name))
   (doseq [hook (get-in @config [:hook :change])]
@@ -90,7 +91,8 @@
       (let [ repo (make-repo)
              branches (map (fn [_]
                              (let [name (clojure.string/replace (.getName _) #"^refs/heads/" "")]
-                               { :name name
+                               { :id name
+                                 :name name
                                  :current (= name (@config :current))}))
                         (git-branch-list repo))]
         { :headers {"Content-Type" "application/json; charset=UTF-8"}
@@ -100,14 +102,12 @@
              name (request-body "name")]
         (make-workspace name))
       { :headers {"Content-Type" "application/json; charset=UTF-8"}})
-    (PUT "/" [:as r]
+    (PUT "/:id" [:as r]
       (let [ request-body (json/read-str (slurp (r :body)))
              name (request-body "name")]
         (change-workspace name))
       { :headers {"Content-Type" "application/json; charset=UTF-8"}})
-    (DELETE "/" [:as r]
-      (let [ request-body (json/read-str (slurp (r :body)))
-             name (request-body "name")]
-        (change-workspace name))
+    (DELETE "/:id" [id]
+      (delete-workspace id)
       { :headers {"Content-Type" "application/json; charset=UTF-8"}})))
 

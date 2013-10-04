@@ -18,10 +18,10 @@
   ([ws router]
     (.. (io/file (@workspace/config :workspace) ws "router" (str router ".clj")) getPath)))
 
-(def route-namespace (ref nil))
+(def route-namespace (atom nil))
 
 (defn load-app-routes []
-  (if (nil? @route-namespace) (dosync (ref-set route-namespace *ns*)))
+  (if (nil? @route-namespace) (reset! route-namespace *ns*))
   (binding [*ns* @route-namespace]
     (load-string
       (string/join " "

@@ -65,8 +65,8 @@
       "switchView"
       (fn [newView]
         (this-as me
-          (if-not (nil? (.-currentView me)) (.. me -currentView remove))
+          (if-not (nil? (.-currentView me)) (.. me -currentView undelegateEvents))
           (set! (.-currentView me) newView)
           (if-not (.. me -currentView -$el parent (is "*"))
-            (-> ($ "#content") (.append (.. me -currentView -$el)))))))))
+            (-> ($ "#content") (.empty) (.append (.. me -currentView -$el)))))))))
 

@@ -10,12 +10,14 @@
     [clojure.data.json :as json]
     [compojure.handler :as handler]
     [compojure.route :as route]
+    [ring.util.codec :as codec]
     [org.httpkit.client :as http]
     [taoensso.carmine :as car :refer (wcar)]
     [me.raynes.fs :as fs]
     [darzana.context :as context]
     [darzana.workspace :as workspace]
-    [darzana.api])
+    [darzana.admin.api]
+    [darzana.api :as api])
   (:import
     [net.sf.json.xml XMLSerializer]))
 
@@ -36,8 +38,9 @@
   (string/replace url #":([A-Za-z_]\w*)" #(context/find-in-scopes context (second %) "")))
 
 (defn build-query-string [context api]
+  (println api)
   (string/join "&"
-    (map #(str (name %) "=" (context/find-in-scopes context (name %))) (:query-keys api))))
+    (map #(str (-> % second name) "=" (context/find-in-scopes context (first %))) (:query-keys api))))
 
 (defn build-url [context api]
   (let [base-url (replace-url-variable (api :url) context)]
@@ -55,10 +58,12 @@
 (defn parse-response [response]
   (let [ content-type (strip-content-type (-> response :headers :content-type))
          body (response :body) ]
+    (println response)
     (cond
       (empty? body) {}
       (re-find #"/xml$"  content-type) (.read (XMLSerializer.) body) 
       (re-find #"/json$" content-type) (json/read-str body)
+      (re-find #"/x-www-form-urlencoded" content-type) (codec/form-decode body)
       (re-find #"^text/plain$" content-type) body
       :else (default-response-parser body))))
 
@@ -66,24 +71,18 @@
   (cond 
     (re-find #"/json$" (get api :content-type ""))
     (json/write-str
-      (reduce #(assoc %1 %2 (context/find-in-scopes context (name %2))) {} (api :query-keys)))
+      (reduce #(assoc %1 (-> %2 second name)
+                 (context/find-in-scopes context (first %2))) {} (api :query-keys)))
     (not= (api :method) :get)
     (string/join "&"
-      (map #(str (name %) "=" (context/find-in-scopes context (name %))) (api :query-keys)))))
-
-(defn build-request-headers [context api]
-  (merge {}
-    (when-let [content-type (api :content-type)] {"Content-Type" content-type})
-    (when (not (or (= (get api :method :get) :get) (contains? api :content-type))) {"Content-Type" "application/x-www-form-urlencoded"})
-    (when-let [token-name (api :oauth-token)]
-      (when-let [token (context/find-in-scopes context token-name)] {"Authorization" (str "Bearer " token)}))))
+      (map #(str (-> % second name) "=" (context/find-in-scopes context (first %))) (api :query-keys)))))
 
 (defn build-request [request context api]
   (merge request
     (when-let [basic-auth (api :basic-auth)]
       {:basic-auth [ (context/find-in-scopes context (first  basic-auth))
                      (context/find-in-scopes context (second basic-auth))]})
-    {:headers (build-request-headers context api)}
+    {:headers (api/build-request-headers context api)}
     {:body (build-request-body context api)}))
 
 (defn execute-api [context api]
@@ -180,7 +179,7 @@
      (-> (context/create-context request#) ~@exprs)))
 
 (defn load-routes []
-  (defroutes routes
+  (compojure/routes
     (GET "/router/reload" []
       (do (load-routes) "reloaded."))
     (load-app-routes)))
@@ -189,12 +188,17 @@
   (compojure/routes
     darzana.template/routes
     darzana.router/routes
-    darzana.api/routes
+    darzana.admin.api/routes
     darzana.workspace/routes
     (GET "*/" {params :params} (ring.util.response/redirect (str (params :*) "/index.html")))
     (route/resources "/" {:root "darzana/admin/public"} )))
 
+(def admin-app-initialized (atom nil))
+
 (defn admin-app [args]
-  (load-file "dev-resources/api.clj")
-  (workspace/change-workspace "master")
-  ((handler/site admin-routes) args))
+  (reset! darzana.router/route-namespace (create-ns 'app))
+  (when-not @admin-app-initialized
+    (load-file "dev-resources/api.clj")
+    (workspace/change-workspace "master")
+    (reset! admin-app-initialized true))
+  ((handler/site (compojure/routes (load-routes) admin-routes)) args))

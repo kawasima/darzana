@@ -14,7 +14,13 @@ Blockly.Mutator = function(){};
 Blockly.Block = function(){};
 Blockly.Block.prototype.initSvg = function(){};
 Blockly.Block.prototype.removeInput = function(){};
+Blockly.Block.prototype.getInput = function(){};
 Blockly.Block.prototype.getInputTargetBlock = function(){};
+
+Blockly.Connection = {};
+Blockly.Connection.prototype.connect = function() {};
+Blockly.Connection.prototype.dispose = function() {};
+Blockly.Connection.prototype.targetBlock = function() {};
 
 Blockly.Language = {};
 Blockly.Language.prototype = {

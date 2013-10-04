@@ -1,4 +1,7 @@
 (ns darzana.block
+  (:use [darzana.i18n :only [t]])
+  (:require
+    [Blockly :as Blockly])
   (:use-macros [darzana.core :only [defblock]]))
 
 (def apiDropdown)
@@ -11,9 +14,9 @@
     (fn []
       (this-as me
         (.setColour me 180)
-        (-> me (.appendDummyInput) (.appendTitle "if-success"))
-        (-> me (.appendStatementInput "success") (.appendTitle "success"))
-        (-> me (.appendStatementInput "error") (.appendTitle "error"))
+        (-> me (.appendDummyInput) (.appendTitle (t :labels/if-success)))
+        (-> me (.appendStatementInput "success") (.appendTitle (t :labels/success)))
+        (-> me (.appendStatementInput "error") (.appendTitle (t :labels/error)))
         (-> me (.setPreviousStatement true))
         (-> me (.setNextStatement true))))))
 
@@ -41,10 +44,11 @@
     (fn []
       (this-as me
         (.setColour me 180)
-        (-> me (.appendDummyInput) (.appendTitle "call-api"))
+        (-> me (.appendDummyInput) (.appendTitle (t :labels/call-api)))
         (-> me (.appendValueInput "API") (.setCheck "Array"))
         (-> me (.setPreviousStatement true))
-        (-> me (.setNextStatement true))))))
+        (-> me (.setNextStatement true))
+        (.. me (setInputsInline true))))))
 
 (defblock api_list
   (js-obj
@@ -56,28 +60,28 @@
         (-> me (.appendValueInput "API0") (.appendTitle "API paralell call"))
         (-> me (.setOutput true "Array"))
         (-> me (.setMutator (new js/Blockly.Mutator (array "lists_create_with_item"))))
-        (set! (.-itemCount_ me) 1)))
+        (aset me "itemCount_" 1)))
     
     "mutationToDom"
     (fn [workspace]
       (this-as me
         (let [container (.createElement js/document "mutation")]
-          (.setAttribute container "items" (.-itemCount_ me))
+          (.setAttribute container "items" (aget me "itemCount_"))
           container)))
     
     "domToMutation"
     (fn [container]
       (this-as me
-        (for [x (range 0 (dec (.-itemCount_ me)))]
+        (for [x (range 0 (dec (aget me "itemCount_")))]
           (.removeInput me (str "API" x)))
-        (set! (.-itemCount_ me)
+        (aset me "itemCount"
           (js/parseInt (.getAttribute container "items") 10))
-        (for [x (range 0 (dec (.-itemCount_ me)))]
+        (for [x (range 0 (dec (aget me "itemCount_")))]
           (let [input (.appendValueInput me (str "API" x))]
             (if (= x 0)
               (.appendTitle input
                 (aget js/Blockly "LANG_LISTS_CREATE_WITH_INPUT_WITH")))))
-        (if (= (.-itemCount_ me) 0)
+        (if (= (aget me "itemCount_") 0)
           (-> me
             (.appendDummyInput "EMPTY")
             (.appendTitle (aget js/Blockly "LANG_LISTS_CREATE_EMPTY_TITLE"))))))
@@ -90,34 +94,34 @@
           (.initSvg containerBlock)
           (loop [ connection (-> containerBlock
                               (.getInput "STACK")
-                              (.-connection))
+                              (aget "connection"))
                   x 0]
             (when (< x (.-itemCount_ me))
               (let [itemBlock (new js/Blockly.Block workspace "lists_create_with_item")]
                 (.initSvg itemBlock)
-                (.connect connection (.-previousConnection itemBlock))
-                (recur (.-nextConnection itemBlock) (inc x)))))
+                (.connect connection (aget itemBlock "previousConnection"))
+                (recur (aget itemBlock "nextConnection") (inc x)))))
           containerBlock)))
 
     "compose"
     (fn [containerBlock]
       (this-as me
-        (if (= (.-itemCount_ me) 0)
+        (if (= (aget me "itemCount_") 0)
           (.removeInput me "EMPTY")
-          (for [x (range (dec (.itemCount_ me)) 0)]
+          (for [x (range (dec (aget me "itemCount_")) 0)]
             (.removeInput me (str "API" x))))
-        (set! (.-itemCount_ me) 0)
+        (aset me "itemCount_" 0)
         (loop [itemBlock (.getInputTargetBlock containerBlock "STACK")]
           (when itemBlock
-            (let [input (.appendValueInput me (str "API" (.-itemCount_ me)))]
-              (if (= (.-itemCount_ me) 0)
+            (let [input (.appendValueInput me (str "API" (aget me "itemCount_")))]
+              (if (= (aget me "itemCount_") 0)
                 (.appendTitle input (aget js/Blockly "LANG_LIST_CREATE_WITH_INPUT_WITH")))
-              (if (.-valueConnection_ itemBlock)
-                (-> input (.-connection) (.connect (.valueConnection_ itemBlock))))
-              (set! (.-itemCount_ me) (inc (.itemCount_ me)))
-              (recur (and (.-nextConnection itemBlock)
-                       (-> itemBlock (.-nextConnection) (.targetBlock)))))))
-        (if (= (.-itemCount_ me) 0)
+              (if (aget itemBlock "valueConnection_")
+                (-> input (aget "connection") (.connect (aget itemBlock "valueConnection_"))))
+              (aset me "itemCount_" (inc (aget me "itemCount_")))
+              (recur (and (aget itemBlock "nextConnection")
+                       (-> itemBlock (aget "nextConnection") (.targetBlock)))))))
+        (if (= (aget me "itemCount_") 0)
           (-> me
             (.appendDummyInput "EMPTY")
             (.appendTitle (aget js/Blockly "LANG_LISTS_CREATE_EMPTY_TITLE"))))))
@@ -128,11 +132,11 @@
         (loop [ itemBlock (.getInputTargetBlock containerBlock "STACK")
                 x 0]
           (when itemBlock
-            (set! (.-valueConnection_ itemBlock)
+            (aset itemBlock "valueConnection_"
               (when-let [input (.getInput me (str "API" x))]
-                (.. input -connection -targetConnection)))
-            (recur (and (.-nextConnection itemBlock)
-                     (.. itemBlock -nextConnection targetBlock))
+                (-> input (aget "connection") (aget "targetConnection"))))
+            (recur (and (aget itemBlock "nextConnection")
+                     (-> itemBlock (aget "nextConnection") (.taregtBlock)))
               (inc x))))))))
 
 (defblock lists_create_with_container
@@ -145,7 +149,7 @@
           (.appendDummyInput)
           (.appendTitle (aget js/Blockly "LANG_LISTS_CREATE_WITH_CONTAINER_TITLE_ADD")))
         (.appendStatementInput me "STACK")
-        (set! (.-contextMenu me) false)))))
+        (aset me "contextMenu" false)))))
 
 (defblock lists_create_with_item
   (js-obj
@@ -158,7 +162,7 @@
           (.appendTitle "API"))
         (.setPreviousStatement me true)
         (.setNextStatement me true)
-        (set! (.-contextMenu me) false)))))
+        (aset me "contextMenu" false)))))
 
 (defblock api
   (js-obj
@@ -180,7 +184,7 @@
     (fn []
       (this-as me
         (.setColour me 320)
-        (-> me (.appendDummyInput) (.appendTitle "redirect"))
+        (-> me (.appendDummyInput) (.appendTitle (t :labels/redirect)))
         (-> me
           (.appendDummyInput)
           (.appendTitle (new js/Blockly.FieldTextInput "") "url"))
@@ -195,7 +199,7 @@
     (fn []
       (this-as me
         (.setColour me 340)
-        (-> me (.appendDummyInput) (.appendTitle "render"))
+        (-> me (.appendDummyInput) (.appendTitle (t :labels/render)))
         (-> me
           (.appendDummyInput)
           (.appendTitle (templateDropdown) "template"))
@@ -229,7 +233,7 @@
     (fn []
       (this-as me
         (.setColour me 160)
-        (-> me (.appendDummyInput) (.appendTitle "marga"))
+        (-> me (.appendDummyInput) (.appendTitle (t :labels/marga)))
         (-> me
           (.appendDummyInput)
           (.appendTitle
@@ -241,27 +245,97 @@
         (.appendStatementInput me "component")))))
 
 (defblock ab_testing_participate
-  (js-obj
-    "helpUrl" ""
-    "init"
-    (fn []
-      (this-as me
-        (.setColour me 160)
-        (-> me (.appendDummyInput) (.appendTitle "A/B testing"))
-        (-> me
-          (.appendDummyInput)
-          (.appendTitle "Test ID")
-          (.appendTitle (new js/Blockly.FieldTextInput "") "test-id"))
-        (-> me
-          (.appendStatementInput "test-a")
-          (.appendTitle "A")
-          (.appendTitle (new js/Blockly.FieldTextInput "10") "probability-a"))
-        (-> me
-          (.appendStatementInput "test-b")
-          (.appendTitle "B")
-          (.appendTitle (new js/Blockly.FieldTextInput "90") "probability-b"))
-        (.setPreviousStatement me true)
-        (.setNextStatement me true)
-        ))))
+  (clj->js
+    { :helpUrl ""
+      :init
+      (fn []
+        (this-as me
+          (.setColour me 160)
+          (-> me (.appendDummyInput) (.appendTitle "A/B testing"))
+          (-> me
+            (.appendDummyInput)
+            (.appendTitle "Test ID")
+            (.appendTitle (new js/Blockly.FieldTextInput "") "test-id"))
+          (-> me
+            (.appendStatementInput "test-a")
+            (.appendTitle (new js/Blockly.FieldTextInput "10") "probability-a"))
+          (-> me
+            (.setMutator
+              (Blockly.Mutator. ['ab-testing-alternative'])))
+          (-> me
+            (.appendStatementInput "test-b")
+            (.appendTitle "B")
+            (.appendTitle (new js/Blockly.FieldTextInput "90") "probability-b"))
+          (.setPreviousStatement me true)
+          (.setNextStatement me true)
+          (set! (.-altCount_ me) 0)
+          ))
+      :mutationToDom
+      (fn []
+        (this-as me
+          (let [container (.createElement js/document "mutation")]
+            (. container setAttribute "alternative" (.-altCount_ me))
+            container)))
+
+      :domToMutation
+      (fn [xmlElement]
+        (this-as me
+          (set! (.-altCount_ me) (js/parseInt (. xmlElement getAttribute "alternative" 10)))
+          (doseq [x (range 1 (.-altCount_ me))]
+            (-> me
+              (.appendStatementInput (str "ALT" x))))
+          ))
+
+      :decompose
+      (fn [workspace]
+        (this-as me
+          (let [containerBlock (Blockly.Block. workspace "ab_testing_alternative_container")]
+            (. containerBlock initSvg)
+            (loop [ x 1
+                    connection (.. containerBlock (getInput "STACK") -connection)]
+              (when (<= x (.-altCount_ me))
+                (let [altBlock (Blockly.Block. workspace "ab_testing_alternative")]
+                  (. altBlock initSvg)
+                  (. connection connect (. altBlock -previousConnection))
+                  (recur (inc x) (. altBlock -nextConnection)))))
+            containerBlock)))
+
+      :compose
+      (fn [containerBlock]
+        (this-as me
+          (loop [clauseBlock (. containerBlock getInputTargetBlock "STACK")]
+            (when-not (nil? clauseBlock)
+              (set! (.-altCount_ me) (inc (.-altCount_ me)))
+              (let [altInput (. me appendStatementInput "ALT")]
+                (when (. clauseBlock -statementConnection_)
+                  (.. altInput -connection (connect (.-statementConnection_ clauseBlock)))))
+              (recur (.. clauseBlock -nextConnection targetBlock)))
+            )))
+      :saveConnections
+      (fn [containerBlock])
+      }))
+
+(defblock ab_testing_alternative_container
+  (clj->js
+    { :init
+      (fn []
+        (this-as me
+          (.  me setColour 210)
+          (.. me appendDummyInput (appendTitle ""))
+          (.  me appendStatementInput "STACK")
+          (set! (.-contextMenu me) false)
+          ))}))
+
+(defblock ab_testing_alternative
+  (clj->js
+    { :helpUrl ""
+      :init
+      (fn []
+        (this-as me
+          (.. me (setColour 210))
+          (-> me
+            (.appendDummyInput)
+            (.appendTitle (t :labels/alternative)))))}
+    ))
 
 (goog/exportProperty js/Blockly "Language" js/Blockly.Language)
