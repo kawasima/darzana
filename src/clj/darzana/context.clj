@@ -22,7 +22,7 @@
              :params      (keyword-to-str (get request :params {}))
              :page        {}
              :error       {}
-             :cookie      {}}
+             :cookies     (get request :cookies {}) }
     :session-add-keys    {}
     :session-delete-keys []
     :request request})
@@ -31,19 +31,21 @@
   (apply merge (vals (context :scope))))
 
 (defn- find-in-scopes-inner [context key]
-  (let [keys (if (coll? key)
+  (if (string? key) key
+    (let [keys (if (coll? key)
                (map name key)
                (name key))]
     (first
       (filter #(not (nil? %))
         (for [scope-name scope-priorities]
           (get-in (context :scope) (flatten [scope-name keys])))))))
+  )
 
 (defn find-in-scopes
   ([context key]
     (find-in-scopes-inner context key))
   ([context key not-found]
-    (log/debug "find-in-scope: " key)
-    (let [value (find-in-scopes-inner context key)]
+    (log/info "find-in-scope: " key)
+    (let [ value (find-in-scopes-inner context key) ]
       (if (nil? value) not-found value))))
 

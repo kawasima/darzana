@@ -1,6 +1,6 @@
 (ns darzana.template
   (:use
-    [compojure.core :as compojure :only (GET POST PUT ANY defroutes)])
+    [compojure.core :as compojure :only (GET POST PUT DELETE ANY defroutes)])
   (:require
     [compojure.handler :as handler]
     [compojure.route :as route]
@@ -79,8 +79,17 @@
         { :headers {"Content-Type" "application/json"}
           :body (json/write-str {:status "successful"})}))
 
+    (DELETE "/*" {params :params}
+      (let [ path (str "template/" (params :*) ".hbs")]
+        (darzana.workspace/delete-file ws path)
+        (darzana.workspace/commit-workspace ws "Delete template.")
+        { :headers {"Content-Type" "application/json"}
+          :body (json/write-str {:status "successful"})}))
+
     (POST "/" [:as r]
       (let [ request-body (json/read-str (slurp (r :body)))
              path (make-path ws (str (request-body "path") ".hbs"))]
-        (spit path ""))
-      { :headers {"Content-Type" "application/json; charset=UTF-8"}})))
+        (io/make-parents path)
+        (spit path (get request-body "hbs" ""))
+        (darzana.workspace/commit-workspace (request-body "workspace") "New template.")
+        { :headers {"Content-Type" "application/json; charset=UTF-8"}}))))

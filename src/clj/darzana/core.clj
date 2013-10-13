@@ -3,7 +3,8 @@
     [compojure.core :as compojure :only (GET POST ANY defroutes)]
     [clojure.tools.nrepl.server :only (start-server stop-server)]
     [darzana.template :only (handlebars)]
-    [darzana.router :only (load-app-routes)])
+    [darzana.router :only (load-app-routes)]
+    [taoensso.carmine.ring :only [carmine-store]])
   (:require
     [clojure.tools.logging :as log]
     [clojure.string :as string]
@@ -26,19 +27,20 @@
 (defmacro defblock [block-name & body]
   `(aset js/Blockly.Language ~(name block-name) ~@body))
 
+(def redis-connection {:pool {} :spec {:host "127.0.0.1" :port 6379}})
 (defmacro wcar* [& body]
   "Redis context wrapper"
-  `(car/wcar {:pool {} :spec {:host "127.0.0.1" :port 6379}} ~@body))
+  `(car/wcar redis-connection ~@body))
 
 (defn set-application-scope [scope]
   (dosync
     (ref-set context/application-scope scope)))
 
 (defn replace-url-variable [url context]
-  (string/replace url #":([A-Za-z_]\w*)" #(context/find-in-scopes context (second %) "")))
+  (string/replace url #":([A-Za-z_]\w*)"
+    #(context/find-in-scopes context (-> % second keyword) "")))
 
 (defn build-query-string [context api]
-  (println api)
   (string/join "&"
     (map #(str (-> % second name) "=" (context/find-in-scopes context (first %))) (:query-keys api))))
 
@@ -58,13 +60,15 @@
 (defn parse-response [response]
   (let [ content-type (strip-content-type (-> response :headers :content-type))
          body (response :body) ]
-    (println response)
     (cond
-      (empty? body) {}
       (re-find #"/xml$"  content-type) (.read (XMLSerializer.) body) 
       (re-find #"/json$" content-type) (json/read-str body)
-      (re-find #"/x-www-form-urlencoded" content-type) (codec/form-decode body)
+      (re-find #"/x-www-form-urlencoded" content-type) (codec/form-decode
+                                                         (cond
+                                                           (string? body) body
+                                                           (instance? java.io.InputStream body) (slurp body)))
       (re-find #"^text/plain$" content-type) body
+      (empty? body) {}
       :else (default-response-parser body))))
 
 (defn build-request-body [context api]
@@ -149,8 +153,13 @@
        (-> ~context ~contains)
        (-> ~context ~not-contains))))
 
-(defn store-session [context session-key context-keys]
-  (assoc-in context [:session-add-keys session-key] context-keys))
+(defn store-session [context & session-keys]
+  (apply merge-with merge context
+    (map (fn [_] {:session-add-keys
+                   (if (vector? _)
+                     (apply hash-map (reverse _))
+                     (hash-map _ _))})
+      session-keys)))
 
 (defn- save-session [response context]
   (let [ session (->
@@ -164,15 +173,30 @@
       response
       (assoc response :session session))))
 
+(defn- save-cookies [response context]
+  (assoc response :cookies
+    (get-in context [:scope :cookies])))
+
 (defn render [ctx template]
   (-> (ring.util.response/response (.apply (.compile @handlebars template) (context/merge-scope ctx)))
     (ring.util.response/content-type (context/find-in-scopes ctx :content-type "text/html"))
     (ring.util.response/charset (context/find-in-scopes ctx :charset "UTF-8"))
-    (save-session ctx)))
+    (save-session ctx)
+    (save-cookies ctx)))
 
-(defn redirect [context url]
-  (-> (ring.util.response/redirect url)
-    (save-session context)))
+(defn redirect
+  ([context url]
+    (redirect context url nil))
+  ([context url options]
+    (-> (ring.util.response/redirect
+          (if options
+            (build-url context
+              { :url url
+                :method :get
+                :query-keys (options :query-keys)})
+            url))
+      (save-session context)
+      (save-cookies context))))
 
 (defmacro defmarga [method url & exprs ]
   `(~method ~url {:as request#}
@@ -197,8 +221,11 @@
 
 (defn admin-app [args]
   (reset! darzana.router/route-namespace (create-ns 'app))
+  (reset! darzana.router/plugins ['darzana.ab-testing])
   (when-not @admin-app-initialized
     (load-file "dev-resources/api.clj")
     (workspace/change-workspace "master")
     (reset! admin-app-initialized true))
-  ((handler/site (compojure/routes (load-routes) admin-routes)) args))
+  ((handler/site
+     (compojure/routes (load-routes) (compojure/context "/admin" [] admin-routes))
+     {:session { :store (carmine-store redis-connection) }}) args))

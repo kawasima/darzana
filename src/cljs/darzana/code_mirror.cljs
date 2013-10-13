@@ -1,9 +1,9 @@
 (ns darzana.code-mirror)
 
-(.defineMode js/CodeMirror "mustache"
+(. js/CodeMirror defineMode "mustache"
   (fn [config parserConfig]
-    (.overlayMode js/CodeMirror
-      (.getMode js/CodeMirror config (aget parserConfig "backdrop" "text/html"))
+    (. js/CodeMirror overlayMode
+      (. js/CodeMirror getMode config (or (. parserConfig -backdrop) "text/html"))
       (js-obj
         "token"
         (fn [stream state]

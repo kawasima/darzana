@@ -3,10 +3,12 @@
     <li>
       <button class="btn btn-back navbar-btn" type="button">Back</button>
     </li>
+    {{#unless workspace.head}}
     <li>
       <button class="btn btn-primary btn-save navbar-btn" type="button"><i class="icon-save icon-large"></i>Save</button>
       <span class="label label-comm-status"></span>
     </li>
+    {{/unless}}
   </ul>
 </div>
 
@@ -23,10 +25,19 @@
     <block type="redirect"></block>
     <block type="store_session"></block>
   </category>
+  <category name="Keys">
+    <block type="key_keyword"></block>
+    <block type="key_literal"></block>
+    <block type="key_assign"></block>
+    <block type="key_composite"></block>
+  </category>
   <category name="Conditions">
     <block type="if_success"></block>
     <block type="if_contains"></block>
+  </category>
+  <category name="A/B Testing">
     <block type="ab_testing_participate"></block>
+    <block type="ab_testing_convert"></block>
   </category>
   
 </xml>

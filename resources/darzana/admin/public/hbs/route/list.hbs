@@ -3,19 +3,23 @@
     Router
   </div>
   <div class="panel-body">
+    {{#unless workspace/head}}
     <a class="icon-stack btn-add">
       <i class="icon-circle-blank icon-stack-base"></i>
       <i class="icon-plus"></i>
     </a>
+    {{/unless}}
   </div>
   <ul class="list-group list-routes">
     {{#each routes}}
       <li class="list-group-item">
         <a href="#{{workspace}}/route/{{../router}}/{{@index}}/edit">{{method}} {{path}}</a>
+        {{#unless ../workspace/head}}
         <a data-route-id="{{@index}}" class="icon-stack btn-delete pull-right">
           <i class="icon-circle-blank icon-stack-base"></i>
           <i class="icon-minus"></i>
         </a>
+        {{/unless}}
       </li>
     {{/each}}
   </ul>

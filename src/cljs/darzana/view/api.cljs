@@ -1,4 +1,4 @@
-(ns darzana.view.template
+(ns darzana.view.api
   (:use
     [darzana.global :only (app)]
     [darzana.model :only (API APIList)]
@@ -17,5 +17,5 @@
         :render
         (fn []
           (this-as me
-            (let [template-fn (.get js/Handlebars.TemplateLoader "api/list")]))})))
+            (let [template-fn (.get js/Handlebars.TemplateLoader "api/list")])))})))
 

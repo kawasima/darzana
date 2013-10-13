@@ -25,22 +25,22 @@
       "model" Template)))
 
 (def Route
-  (.extend js/Backbone.Model
-    (js-obj
-      "urlRoot"
-      (fn []
-        (this-as me
-          (str
-            "router/"
-            (.get me "workspace")
-            "/"
-            (.get me "router"))))
-      "validate"
-      (fn [attrs options]
-        (this-as me
-          (let [dom ($ (.parseXML $ (.-xml attrs)))]
-            (if (not= (.. dom (find "xml > block") size) 1)
-              "defmarga is only one.")))))))
+  (. js/Backbone.Model extend
+    (clj->js
+      { :urlRoot
+        (fn []
+          (this-as me
+            (str
+              "router/"
+              (. me get "workspace")
+              "/"
+              (. me get "router"))))
+        :validate
+        (fn [attrs options]
+          (this-as me
+            (let [dom ($ (. js/jQuery parseXML (.-xml attrs)))]
+              (if (not= (.. dom (find "xml > block") size) 1)
+                "defmarga is only one."))))})))
 
 (def RouteList
   (.extend js/Backbone.Collection

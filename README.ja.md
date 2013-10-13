@@ -59,7 +59,25 @@ http://localhost:3000/admin/ が管理アプリケーションのURLです。こ
 
 #### (query-keys & ks)
 
-APIの検索クエリ
+APIの検索クエリです。
+
+qという名前で受けたパラメータを、APIのパラメータqとして渡す。
+
+```clojure
+(query-keys :q)
+```
+
+searchという名前で受けたパラメータを、APIのパラメータqとして渡す。
+
+```clojure
+(query-keys (assign :search => :q))
+```
+
+APIのパラメータformatに固定文字"json"を渡す。
+
+```clojure
+(query-keys (assign "json" => :format))
+```
 
 ### コントローラコンポーネント
 
@@ -78,6 +96,10 @@ urlにリダイレクトします。
 #### (if-success success-expr failure-expr)
 
 この時点でエラースコープが空であれば、success-exprを実行し、そうでなければfailure-exprを実行します。
+
+#### (store-session & ks)
+
+セッションスコープに値を格納します。
 
 ## 変数のスコープ
 

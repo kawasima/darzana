@@ -4,6 +4,9 @@
     [darzana.global :only (app)]
     [darzana.i18n :only [t]]))
 
+;;;
+;;; Setting for handebars helpers
+;;;
 (.registerHelper js/Handlebars "selected"
   (fn [foo bar]
     (if (= foo bar) "selected='selected'" "")))
@@ -12,17 +15,24 @@
   (fn [key]
     (t (keyword key))))
 
-(.config js/Handlebars.TemplateLoader (js-obj "prefix" "./hbs/"))
+(set! (.. js/jQuery -fn -label)
+  (fn [type msg]
+    (this-as me
+      (.. me
+        (removeClass "label-success label-info label-danger label-warning")
+        (addClass    (str "label-" type))
+        (text msg)))))
 
-(.load js/Handlebars.TemplateLoader
+(. js/Handlebars.TemplateLoader config (js-obj "prefix" "./hbs/"))
+
+(. js/Handlebars.TemplateLoader load
   (array
     "menu"
     "route/index" "route/list" "route/edit" "route/new"
-    "template/list" "template/edit" "template/new"
+    "template/list" "template/edit" "template/new" "template/_list_item"
     )
   (js-obj
     "complete"
     (fn []
       (set! app (Application.))
-      (.start Backbone.history (js-obj "pushState" false)))))
-
+      (. Backbone.history start (clj->js { :pushState false })))))

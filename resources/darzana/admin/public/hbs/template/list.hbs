@@ -10,13 +10,26 @@
   </div>
   <ul class="list-group list-templates">
     {{#each templates}}
-      <li class="list-group-item">
-        <a href="#{{workspace}}/template/{{path}}/edit">{{path}}</a>
-        <a class="icon-stack btn-delete pull-right">
-          <i class="icon-circle-blank icon-stack-base"></i>
-          <i class="icon-minus"></i>
-        </a>
-      </li>
+    {{> template/_list_item}}
     {{/each}}
   </ul>
+</div>
+
+<div class="modal fade" id="modal-template-copy" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-btitle">Copy template</h4>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="src_path"/>
+        <input type="text" name="dest_path" class="form-control"/>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary btn-copy">Copy</button>
+      </div>
+    </div>
+  </div>
 </div>

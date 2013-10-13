@@ -4,6 +4,8 @@
     [darzana.model :only (Route RouteList TemplateList APIList)]
     [darzana.block :only (apiDropdown templateDropdown)]
     [jayq.core :only ($)])
+  (:require
+    [Blockly :as Blockly])
   (:use-macros
     [jayq.macros :only [let-ajax]]))
 
@@ -18,7 +20,7 @@
       "initialize"
       (fn []
         (this-as me
-          (let-ajax [data { :url (str "router/" (aget (.-options me) "workspace")) }]            
+          (let-ajax [data { :url (str "router/" (.. me -options -workspace -id)) }]
             (-> me
               (.$ "select[name=router]")
               (.append
@@ -26,7 +28,7 @@
                   (fn [routerFile]
                     (-> ($ "<option/>")
                       (.text (.replace routerFile #"\.clj$" "")))))))
-            (if-let [router (aget (.-options me) "router")]
+            (if-let [router (.. me -options -router)]
               (-> me
                 (.$ "select[name=router]")
                 (.val router)
@@ -42,12 +44,12 @@
       "fetchRouter"
       (fn [event]
         (this-as me
-          (let [router (.val ($ (aget event "target")))]
+          (let [router (.val ($ (. event -currentTarget)))]
             (when router
-              (.navigate app (str "#" (aget (.-options me) "workspace") "/route/" router))
+              (.navigate app (str "#" (.. me -options -workspace -id) "/route/" router))
               (new RouteListView (js-obj
                                    "router" router
-                                   "workspace" (aget (.-options me) "workspace"))))))))))
+                                   "workspace" (.. me -options -workspace))))))))))
 
 (def RouteListView
   (.extend js/Backbone.View
@@ -65,9 +67,9 @@
               (js-obj
                 "url" (str
                         "router/"
-                        (aget (.-options me) "workspace")
+                        (.. me -options -workspace -id)
                         "/"
-                        (aget (.-options me) "router")))))
+                        (.. me -options -router)))))
           (.. me -collection (on "reset"  (.-render me) me))
           (.. me -collection (on "add"    (.-render me) me))
           (.. me -collection (on "remove" (.-render me) me))
@@ -76,19 +78,20 @@
       "render"
       (fn []
         (this-as me
-          (let [ template-fn (.get js/Handlebars.TemplateLoader "route/list")]
+          (let [ template-fn (. js/Handlebars.TemplateLoader get "route/list")]
             (.. me -$el (html (template-fn
-                                (js-obj
-                                  "routes" (.. me -collection toJSON)
-                                  "router" (aget (.-options me) "router"))))))))
+                                (clj->js
+                                  { :routes    (.. me -collection toJSON)
+                                    :workspace (.. me -options -workspace toJSON)
+                                    :router    (.. me -options -router) })))))))
 
       "newRoute"
       (fn []
         (this-as me
-          (let [ template-fn (.get js/Handlebars.TemplateLoader "route/new")
+          (let [ template-fn (. js/Handlebars.TemplateLoader get "route/new")
                  route ($ (template-fn (js-obj)))]
             (.. me ($ ".list-routes") (append route))
-            (.. ($ js/window) (scrollTop (aget (.offset me) "top"))))))
+            (.. ($ js/window) (scrollTop (. me offset "top"))))))
 
       "createRoute"
       (fn []
@@ -97,10 +100,10 @@
                         (js-obj
                           "method" (-> me (.$ "#form-route-new [name=route-method]") (.val))
                           "path"   (-> me (.$ "#form-route-new [name=route-path]")   (.val))
-                          "router" (aget (.-collection me) "router")))]
+                          "router" (.. me -collection -router)))]
             (try
               (.. me -collection (add route))
-              (.save route)
+              (.  route save)
               (.. me ($ "#form-route-new") parent remove)
               (catch js/Error e (.log js/console e)))
             false)))
@@ -109,104 +112,109 @@
       (fn [event]
         (this-as me
           (.. me -collection
-            (at (.. ($ (aget event "currentTarget")) (data "route-id")))
+            (at (.. ($ (. event -currentTarget)) (data "route-id")))
             destroy))))))
 
 (def RouteEditView
-  (.extend js/Backbone.View
-    (js-obj
-      "el" ($ "<div id='page-route-edit'/>")
-      "events" (js-obj
+  (. js/Backbone.View extend
+    (clj->js
+      { :el ($ "<div id='page-route-edit'/>")
+        :events (js-obj
                  "click .btn-save" "save"
                  "click .btn-back" "back")
-      "initialize"
-      (fn []
-        (this-as me
-          (set! (.-model me)
-            (Route. (js-obj
-                      "id" (aget (.-options me) "id")
-                      "workspace" (aget (.-options me) "workspace")
-                      "router" (aget (.-options me) "router"))))
-          (.. me -model (on "change" (.-render me) me))
-          (.. me -model (on "invalid"
-                          (fn [model error]
-                            (.. me ($ ".label-comm-status") (label "danger" error)))
-                          me))
-          (set! (.-availableTemplates me)
-            (TemplateList. (js-obj)
-              (js-obj "url" (str "template/" (aget (.-options me) "workspace")))))
+        :initialize
+        (fn []
+          (this-as me
+            (set! (.-model me)
+              (Route. (js-obj
+                        "id"        (.. me -options -id)
+                        "workspace" (.. me -options -workspace -id)
+                        "router"    (.. me -options -router))))
+            (.. me -model (on "change" (.-render me) me))
+            (.. me -model (on "invalid"
+                            (fn [model error]
+                              (.. me ($ ".label-comm-status") (label "danger" error)))
+                            me))
+            (set! (. me -availableTemplates)
+              (TemplateList. (js-obj)
+                (js-obj "url" (str "template/" (.. me -options -workspace -id)))))
 
-          (set! (.-availableAPIs me) (APIList.))
-          (.. me -availableTemplates
-            (on "reset"
+            (set! (. me -availableAPIs) (APIList.))
+            (.. me -availableTemplates
+              (on "reset"
+                (fn []
+                  (.. me -availableAPIs (fetch (js-obj "reset" true))))
+                me))
+            (.. me -availableAPIs (on "reset" (aget me "fetchRouter") me))
+            (.. me -availableTemplates (fetch (js-obj "reset" true)))))
+
+        :render
+        (fn []
+          (this-as me
+            (let [ template-fn (.get js/Handlebars.TemplateLoader "route/edit")]
+              (.. me -$el (html (template-fn
+                                  (clj->js { :workspace (.. me -options -workspace toJSON)})))))
+            (def templateDropdown
               (fn []
-                (.. me -availableAPIs (fetch (js-obj "reset" true))))
-              me))
-          (.. me -availableAPIs (on "reset" (aget me "fetchRouter") me))
-          (.. me -availableTemplates (fetch (js-obj "reset" true)))))
+                (new js/Blockly.FieldDropdown
+                  (.map js/_
+                    (.. me -availableTemplates toJSON)
+                    (fn [hbs] (clj->js [(. hbs -id) (. hbs -path)]))))))
+            (def apiDropdown
+              (fn []
+                (new js/Blockly.FieldDropdown
+                  (.map js/_
+                    (.. me -availableAPIs toJSON)
+                    (fn [api] (array (aget api "id") (aget api "name")))))))
+            (. js/Blockly inject 
+              (.getElementById js/document "marga-blockly")
+              (clj->js
+                { :path     "./"
+                  :toolbox  (.getElementById js/document "marga-toolbox")
+                  :trashcan false
+                  :readOnly (.. me -options -workspace (get "head"))
+                  :collapse true
+                  :scrollbars false }))
+            (.domToWorkspace js/Blockly.Xml
+              (aget js/Blockly "mainWorkspace")
+              (.textToDom js/Blockly.Xml (.. me -model (get "xml"))))))
 
-      "render"
-      (fn []
-        (this-as me
-          (let [ template-fn (.get js/Handlebars.TemplateLoader "route/edit")]
-            (.. me -$el (html (template-fn (js-obj)))))
-          (def templateDropdown
-            (fn []
-              (new js/Blockly.FieldDropdown
-                (.map js/_
-                  (.. me -availableTemplates toJSON)
-                  (fn [hbs] (array (aget hbs "id") (aget hbs "path")))))))
-          (def apiDropdown
-            (fn []
-              (new js/Blockly.FieldDropdown
-                (.map js/_
-                  (.. me -availableAPIs toJSON)
-                  (fn [api] (array (aget api "id") (aget api "name")))))))
-          (.inject js/Blockly
-            (.getElementById js/document "marga-blockly")
-            (js-obj
-              "path" "./"
-              "toolbox" (.getElementById js/document "marga-toolbox")
-              "trashcan" false
-              "collapse" false))
-          (.domToWorkspace js/Blockly.Xml
-            (aget js/Blockly "mainWorkspace")
-            (.textToDom js/Blockly.Xml (.. me -model (get "xml"))))))
+        :fetchRouter
+        (fn []
+          (this-as me
+            (.. me -model fetch)))
 
-      "fetchRouter"
-      (fn []
-        (this-as me
-          (.. me -model fetch)))
+        :save
+        (fn []
+          (this-as me
+            (let [xml (. Blockly.Xml workspaceToDom Blockly.mainWorkspace)]
+              (.. me ($ ".label-comm-status") (label "info" "Saving..."))
+              (.. me -model
+                (save "xml" (. Blockly.Xml domToText xml)
+                  (clj->js
+                    { :success
+                      (fn [model]
+                        (.. me ($ ".label-comm-status") (label "success" "Saved!"))
+                        (js/setTimeout
+                          (fn [] (.. me ($ ".label-comm-status") (label "default" "")))
+                          1500))
 
-      "save"
-      (fn []
-        (this-as me
-          (let [xml (.workspaceToDom js/Blockly.Xml (aget js/Blockly "mainWorkspace"))]
-            (.. me ($ ".label-comm-status") (label "info" "Saving..."))
-            (.. me -model
-              (save "xml" (.domToText js/Blockly.Xml)
-                (js-obj
-                  "success"
-                  (fn [model]
-                    (.. me ($ ".label-comm-status") (label "success" "Saved!"))
-                    (js/setTimeout
-                      (fn [] (.. me ($ ".label-comm-status") (label "default" "")))
-                      1500))
+                      :error
+                      (fn [model]
+                        (.. me ($ ".label-comm-status") (label "error" "Save failed!"))
+                        (js/setTimeout
+                          (fn [] (.. me ($ ".label-comm-status") (label "default" "")))
+                          1500))}))))))
 
-                  "error"
-                  (fn [model]
-                    (.. me ($ ".label-comm-status") (label "error" "Save failed!"))
-                    (js/setTimeout
-                      (fn [] (.. me ($ ".label-comm-status") (label "default" "")))
-                      1500))))))))
+        :back
+        (fn []
+          (this-as me
+            (.navigate app
+              (str
+                (.. me -options -workspace -id)
+                "/route/"
+                (.. me -options -router))
+              (clj->js {:trigger true}))))
 
-      "back"
-      (fn []
-        (this-as me
-          (.navigate app
-            (str
-              (aget (.-options me) "workspace")
-              "/route/"
-              (aget (.-options me) "router"))
-            (js-obj "trigger" true)))))))
+        })))
 

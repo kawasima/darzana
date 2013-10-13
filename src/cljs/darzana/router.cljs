@@ -3,70 +3,96 @@
     [darzana.view.menu :only (MenuView)]
     [darzana.view.template :only (TemplateListView TemplateEditView)]
     [darzana.view.route :only (RouteView RouteEditView)]
+    [darzana.view.api :only (APIListView)]
+    [darzana.model :only (Workspace)]
     [jayq.core :only ($)]))
 
 (def Application
-  (.extend Backbone.Router
-    (js-obj
-      "routes"
-      (js-obj
-        "" "menu"
-        ":workspace" "menu"
-        ":workspace/route" "routeIndex"
-        ":workspace/route/:router" "routeIndex"
-        ":workspace/route/:router/:id/edit" "routeEdit"
-        ":workspace/template" "templateList"
-        ":workspace/template/*path/edit" "templateEdit")
+  (. Backbone.Router extend
+    (clj->js
+      { :routes
+        (clj->js
+          { "" "menu"
+            ":workspace" "menu"
+            ":workspace/route" "routeIndex"
+            ":workspace/route/:router" "routeIndex"
+            ":workspace/route/:router/:id/edit" "routeEdit"
+            ":workspace/template" "templateList"
+            ":workspace/template/*path/edit" "templateEdit" })
 
-      "initialize"
-      (fn []
-        (this-as me
-          (set! (.-currentView me) nil)))
+        :initialize
+        (fn []
+          (this-as me
+            (set! (.-currentView me) nil)))
 
-      "menu"
-      (fn [workspace]
-        (this-as me
-          (.switchView me
-            (MenuView.
-              (js-obj "workspace"
-                (if (empty? workspace)
-                  "master"
-                  workspace))))))
+        :menu
+        (fn [workspace]
+          (this-as me
+            (.switchView me
+              (MenuView.
+                (js-obj "workspace"
+                  (if (empty? workspace)
+                    "master"
+                    workspace))))))
 
-      "routeIndex"
-      (fn [workspace router]
-        (this-as me
-          (.switchView me
-            (RouteView.
-              (js-obj
-                "workspace" workspace
-                "router" router)))))
+        :routeIndex
+        (fn [ws-name router]
+          (this-as me
+            (let [workspace (Workspace. (clj->js {:id ws-name}))]
+              (. workspace fetch
+                (clj->js
+                  { :success
+                    (fn [workspace]
+                      (. me switchView
+                        (RouteView.
+                          (js-obj
+                            "workspace" workspace
+                            "router" router))))})))))
 
-      "routeEdit"
-      (fn [workspace router id]
-        (this-as me
-          (.switchView me
-            (RouteEditView.
-              (js-obj
-                "workspace" workspace
-                "router" router
-                "id" id)))))
+        :routeEdit
+        (fn [ws-name router id]
+          (this-as me
+            (let [workspace (Workspace. (clj->js {:id ws-name}))]
+              (. workspace fetch
+                (clj->js
+                  { :success
+                    (fn [workspace]
+                      (. me switchView
+                        (RouteEditView.
+                          (js-obj
+                            "workspace" workspace
+                            "router" router
+                            "id" id))))})))))
 
-      "templateList"
-      (fn [workspace]
-        (this-as me
-          (.switchView me (TemplateListView. (js-obj "workspace" workspace)))))
+        :templateList
+        (fn [ws-name]
+          (this-as me
+            (let [workspace (Workspace. (clj->js {:id ws-name}))]
+              (. workspace fetch
+                (clj->js
+                  { :success
+                    (fn [workspace]
+                      (. me switchView
+                        (TemplateListView.
+                          (js-obj "workspace" workspace))))})))))
 
-      "templateEdit"
-      (fn [workspace path]
-        (this-as me
-          (.switchView me (TemplateEditView. (js-obj "workspace" workspace "path" path)))))
+        :templateEdit
+        (fn [ws-name path]
+          (this-as me
+            (let [workspace (Workspace. (clj->js {:id ws-name}))]
+              (. workspace fetch
+                (clj->js
+                  { :success
+                    (fn [workspace]
+                      (. me switchView
+                        (TemplateEditView.
+                          (js-obj "workspace" workspace "path" path))))})))))
 
-      "switchView"
-      (fn [newView]
-        (this-as me
-          (if-not (nil? (.-currentView me)) (.. me -currentView undelegateEvents))
-          (set! (.-currentView me) newView)
-          (if-not (.. me -currentView -$el parent (is "*"))
-            (-> ($ "#content") (.empty) (.append (.. me -currentView -$el)))))))))
+        :switchView
+        (fn [newView]
+          (this-as me
+            (when (. me -currentView) (.. me -currentView undelegateEvents))
+            (set! (. me -currentView) newView)
+            (if-not (.. me -currentView -$el parent (is "*"))
+              (-> ($ "#content") (.empty) (.append (.. me -currentView -$el))))))})))
 

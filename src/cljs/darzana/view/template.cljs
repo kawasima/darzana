@@ -5,13 +5,15 @@
     [jayq.core :only ($)]))
 
 (def TemplateListView
-  (.extend js/Backbone.View
+  (. Backbone.View extend
     (js-obj
       "el" ($ "<div id='page-template-list'/>")
       "events" (js-obj
                  "submit #form-template-new" "createTemplate"
-                 "click .btn-add" "newTemplate"
-                 "click a.btn-delete" "deleteTemplate")
+                 "click .btn-open-modal-copy" "openModal"
+                 "click .btn-add"     "newTemplate"
+                 "click .btn-delete" "deleteTemplate"
+                 "click .btn-copy"   "copyTemplate")
       "initialize"
       (fn []
         (this-as me
@@ -19,17 +21,17 @@
             (TemplateList. (js-obj)
               (js-obj
                 "url"
-                (str "template/" (aget (.-options me) "workspace")))))
+                (str "template/" (.. me -options -workspace -id)))))
           (.. me -collection (on "reset"  (.-render me) me))
           (.. me -collection (on "add"    (.-render me) me))
           (.. me -collection (on "remove" (.-render me) me))
-          (.. me -collection (fetch (js-obj "reset" true)))
+          (.. me -collection (fetch (clj->js { :reset true })))
           ))
       
       "render"
       (fn []
         (this-as me
-          (let [template-fn (.get js/Handlebars.TemplateLoader "template/list")]
+          (let [template-fn (. js/Handlebars.TemplateLoader get "template/list")]
             (.. me -$el (html (template-fn
                                 (js-obj
                                   "templates" (.. me -collection toJSON))))))))
@@ -45,22 +47,56 @@
       "createTemplate"
       (fn [event]
         (this-as me
-          (let [ template (Template. (js-obj
-                                       "path"
-                                       (.. me ($ "#form-template-new [name=path]") val)))]
+          (let [ template (Template.
+                            (clj->js
+                              { :path (.. me ($ "#form-template-new [name=path]") val)
+                                :workspace (.. me -options -workspace)})
+                            (clj->js
+                              { :url (str "template/" (.. me -options -workspace)) }))]
             (try
               (.. me -collection (add template))
-              (.save template)
+              (.  template save)
               (.. ($ "#form-template-new") parent remove)
               (catch js/Error e (.log js/console (pr-str e))))))
         false)
+
+      "openModal"
+      (fn [event]
+        (this-as me
+          (let [template-id (-> ($ (. event -currentTarget)) (.data "template-id") )]
+            (-> me (.$ ":input[name=src_path]")   (.val template-id))
+            (-> me (.$ ":input[name=dest_path]")  (.val (str template-id "~"))))))
+
+      "copyTemplate"
+      (fn [event]
+        (this-as me
+          (let [ dest-path (.. me ($ ":input[name=dest_path]") val)
+                 src-path  (.. me ($ ":input[name=src_path]")  val)
+                 src-template (Template. (clj->js { :id src-path :path src-path
+                                                    :workspace (.. me -options -workspace)})) ]
+            (. src-template fetch
+              (clj->js
+                { :success
+                  (fn [model]
+                    (.. me -collection (add model))
+                    (.  model save
+                      (clj->js { :path dest-path})
+                      (clj->js { :success (. me -renderListItem) })))})))))
+
+      "renderListItem"
+      (fn [model]
+        (this-as me
+          (let [ template-fn (. js/Handlebars.TemplateLoader get "template/_list_item") ]
+            (.. me ($ "#modal-template-copy") (modal "hide"))
+            (.. me ($ ".list-templates")
+              (append ($ (template-fn (. model toJSON))))))))
 
       "deleteTemplate"
       (fn [event]
         (this-as me
           (.. me
             -collection
-            (at (.data ($ (.-currentTarget event)) "template-id"))
+            (get (.data ($ (. event -currentTarget)) "template-id"))
             destroy))))))
   
 (def TemplateEditView
@@ -75,9 +111,9 @@
         (this-as me
           (set! (.-model me)
             (Template. (js-obj
-                         "id" (aget (.-options me) "path")
-                         "path" (aget (.-options me) "path")
-                         "workspace" (aget (.-options me) "workspace"))))
+                         "id"        (.. me -options -path)
+                         "path"      (.. me -options -path)
+                         "workspace" (.. me -options -workspace toJSON))))
           (.. me -model (on "change" (.-render me) me))
           (.. me -model fetch)))
 
@@ -106,7 +142,7 @@
                     (removeClass "label-info")
                     (addClass "label-success")
                     (text "Saved!"))
-                  (.setTimeout
+                  (js/setTimeout
                     (fn [] (.. me
                              ($ ".label-comm-status")
                              (removeClass "label-success")
@@ -120,7 +156,7 @@
                     (removeClass "label-info")
                     (addClass "label-error")
                     (text "Save failed!"))
-                  (.setTimeout
+                  (js/setTimeout
                     (fn [] (.. me
                              ($ ".label-comm-status")
                              (removeClass "label-error")
@@ -132,6 +168,6 @@
       (fn []
         (this-as me
           (.navigate app
-            (str (aget (.-options me) "workspace") "/template")
+            (str (.. me -options -workspace -id) "/template")
             (js-obj
               "trigger" true)))))))

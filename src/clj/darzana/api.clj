@@ -6,14 +6,14 @@
 
 (def apis (ref []))
 
-(def => 'key-mapping)
+(def => 'assignment)
 
-(defn keymap
+(defn assign
   ([from to]
     [from to])
   ([from arrow to]
-    (if (= arrow 'key-mapping)
-      (keymap from to))))
+    (if (= arrow 'assignment)
+      (assign from to))))
 
 (defn create-api
   "create an api."
@@ -51,7 +51,7 @@
   [api & fields]
   (assoc api :query-keys
     (map #(cond
-            (keyword? %) (keymap % %)
+            (keyword? %) (assign % %)
             (vector?  %) %) fields)))
 
 (defn expire
@@ -70,8 +70,11 @@
 
 (defn oauth-1-authorization
   [api & oauth-params]
+  (println oauth-params)
   (assoc api :oauth-1-authorization
-    (reduce conj {} (map (fn [_] [(second _) (first _)]) oauth-params))))
+    (reduce conj {} (map #(cond
+                            (vector?  %) [(second %) (first %)]
+                            (keyword? %) [% %]) oauth-params))))
 
 (defmacro defapi
   [api & body]
@@ -92,9 +95,19 @@
         {"Authorization" (str "Bearer " token)}))
     (when-let [oauth1 (api :oauth-1-authorization)]
       (let [ consumer-key (context/find-in-scopes context (oauth1 :oauth_consumer_key))
-             consumer-secret (context/find-in-scopes context (oauth1 :oauth_consumer_key))
+             consumer-secret (context/find-in-scopes context (oauth1 :oauth_consumer_secret))
              consumer (oauth/make-consumer consumer-key consumer-secret nil nil nil :hmac-sha1)
-             unsigned-params (sig/oauth-params consumer (sig/rand-str 30) (sig/msecs->secs (System/currentTimeMillis)))
+             unsigned-params (sig/oauth-params consumer
+                               (sig/rand-str 30)
+                               (sig/msecs->secs (System/currentTimeMillis)))
+             unsigned-params (if-let [oauth-token (oauth1 :oauth_token)]
+                               (assoc unsigned-params :oauth_token
+                                 (context/find-in-scopes context oauth-token))
+                               unsigned-params)
+             unsigned-params (if-let [oauth-verifier (oauth1 :oauth_verifier)]
+                               (assoc unsigned-params :oauth_verifier
+                                 (context/find-in-scopes context oauth-verifier))
+                               unsigned-params)
              unsigned-params (if-let [callback-uri (oauth1 :oauth_callback)]
                                (assoc unsigned-params :oauth_callback
                                  (context/find-in-scopes context callback-uri))
@@ -103,8 +116,10 @@
                          consumer
                          (sig/base-string
                            (-> (get api :method :get) sig/as-str clojure.string/upper-case)
-                           (api :url) unsigned-params)
-                         (if-let [token-secret (oauth1 :token_secret)]
+                           (api :url)
+                           (reduce conj unsigned-params
+                               (map (fn [_] [(-> _ second keyword) (context/find-in-scopes context (first _))]) (api :query-keys))))
+                         (if-let [token-secret (oauth1 :oauth_token_secret)]
                            (context/find-in-scopes context token-secret)
                            nil)) ]
         {"Authorization" (oauth/authorization-header

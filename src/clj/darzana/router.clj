@@ -19,18 +19,21 @@
     (.. (io/file (@workspace/config :workspace) ws "router" (str router ".clj")) getPath)))
 
 (def route-namespace (atom nil))
+(def plugins (atom []))
 
 (defn load-app-routes []
   (if (nil? @route-namespace) (reset! route-namespace *ns*))
   (binding [*ns* @route-namespace]
-    (load-string
-      (string/join " "
+    (let [ code-routing (string/join " "
         (flatten 
-          [ "(use '[darzana.core] '[compojure.core :as compojure :only (GET POST PUT ANY defroutes)])"
+          [ "(use ['darzana.core] ['compojure.core :as 'compojure :only '(GET POST PUT ANY defroutes)]"
+            (map (fn [_] [" ['" _ "]"]) @plugins) ")"
             "(defroutes app-routes"
             (map #(slurp %)
               (fs/glob (io/file (make-path)) "*.clj"))
-            ")"])))))
+            ")"]))]
+      (load-string code-routing) 
+      )))
 
 (defmulti serialize-api (fn [x] (coll? x)))
 
@@ -45,7 +48,28 @@
   [:block {:type "api"}
     [:title {:name "api"} api]])
 
+(defmulti serialize-keys (fn [x] (type x)))
+
+(defmethod serialize-keys clojure.lang.PersistentVector [ks]
+  [:block {:type "key_composite" :inline true}
+    (map-indexed (fn [i _] [:value {:name (str "KEY" i)} (serialize-keys _)]) ks)])
+
+(defmethod serialize-keys clojure.lang.Keyword [ks]
+  [:block {:type "key_keyword"}
+    [:title {:name "KEYWORD"} (name ks)]])
+
+(defmethod serialize-keys java.lang.String [ks]
+  [:block {:type "key_literal"}
+    [:title {:name "STRING"} ks]])
+
+(defmethod serialize-keys :default [ks] (throw (Exception. (str "Parse error in keys:" ks))))
+
 (defmulti serialize-component (fn [s r] (first s)))
+
+(defmethod serialize-component 'assign [s r]
+  [:block {:type "key_assign" :inline true}
+    [:value {:name "FROM"} (serialize-keys (nth s 1))]
+    [:value {:name "TO"}   (serialize-keys (nth s 3))]])
 
 (defmethod serialize-component 'call-api [s r]
   (let [elm [:block {:type "call_api" :inline true}
@@ -55,10 +79,12 @@
       (conj elm [:next (serialize-component (first r) (rest r))]))))
 
 (defmethod serialize-component 'render [s r]
-  [:block {:type "render"} [:title {:name "template"} (second s)]])
+  [:block {:type "render"}
+    [:title {:name "template"} (second s)]])
 
 (defmethod serialize-component 'redirect [s r]
-  [:block {:type "redirect"} [:title {:name "url"} (second s)]])
+  [:block {:type "redirect"}
+    [:title {:name "url"} (second s)]])
 
 (defmethod serialize-component 'if-success [s r]
   (let [elm [:block {:type "if_success"}
@@ -77,8 +103,13 @@
 
 (defmethod serialize-component 'store-session [s r]
   (let [elm [:block {:type "store_session"}
-              [:title {:name "session-key"} (name (nth s 1))]
-              [:title {:name "context-key"} (clojure.string/join " " (map name (nth s 2)))]]]
+              (map-indexed
+                (fn [i _]
+                  [:value {:name (str "KEY" i)}
+                    (if (seq? _)
+                      (serialize-component _ nil)
+                      [:block {:type "key_keyword"} [:title {:name (name _) }]])])
+                (drop 1 s)) ]]
     (if (empty? r) elm
       (conj elm [:next (serialize-component (first r) (rest r))]))))
 
@@ -184,11 +215,26 @@
       (map deserialize-next (filter-children block :next)))))
 
 (defmethod deserialize-block "store_session" [block]
-  (let [sexp (seq ['store-session
-                    (keyword (get-text (find-child block :title {:name "session-key"})))
-                    (vec (map keyword (clojure.string/split (get-text (find-child block :title {:name "context-key"})) #"\s+")))])]
+  (let [sexp (seq
+               (apply conj ['store-session]
+                 (map #(deserialize-block (find-child % :block))  (filter-children block :value))))]
     (reduce #(apply conj %1 %2) [sexp]
       (map deserialize-next (filter-children block :next)))))
+
+(defmethod deserialize-block "key_assign" [block]
+  (seq [ 'assign
+         (deserialize-block (find-child (find-child block :value { :name "FROM" }) :block))
+         '=>
+         (deserialize-block (find-child (find-child block :value { :name "TO"   }) :block))]))
+
+(defmethod deserialize-block "key_keyword" [block]
+  (-> block (find-child :title {:name "KEYWORD"}) (get-text) (keyword)))
+
+(defmethod deserialize-block "key_literal" [block]
+  (-> block (find-child :title {:name "STRING"}) (get-text)))
+
+(defmethod deserialize-block "key_composite" [block]
+  (vec (map #(deserialize-block (find-child % :block)) (filter-children block :value))))
 
 (defmethod deserialize-block :default [block] nil)
 

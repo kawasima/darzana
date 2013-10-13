@@ -5,6 +5,10 @@
     this.suffix = ".hbs";
     this.initialize.apply(this, arguments);
   };
+
+  function basename(filename) {
+    return filename.substring(filename.lastIndexOf("/") + 1);
+  }
  
   _.extend(TemplateLoader.prototype, {}, {
     initialize: function() {
@@ -23,6 +27,10 @@
           dataType: "text",
           success: function(templateBody) {
             self.cache[templateName] = Handlebars.compile(templateBody);
+            if (basename(templateName).lastIndexOf("_", 0) == 0) {
+              Handlebars.registerPartial(templateName, self.cache[templateName]);
+            }
+            
             unloadedTemplates = _.without(unloadedTemplates, templateName);
             if (unloadedTemplates.length == 0 && self.complete)
               self.complete.call(self);

@@ -16,6 +16,7 @@
           :success "success"
           :error "error"
           :alternative "alternative"
+          :convert "Convert"
           :current-workspace "Current workspace" }
         :buttons
         { :save "Save"
@@ -34,6 +35,8 @@
           :redirect "リダイレクト"
           :success "成功の場合"
           :error "失敗の場合"
+          :alternative "代替案"
+          :convert "A/Bテスト コンバージョン"
           :current-workspace "現在のワークスペース"}
         :messages
         { :manage-components "コンポーネントの管理"
