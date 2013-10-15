@@ -3,7 +3,7 @@
     [darzana.view.menu :only (MenuView)]
     [darzana.view.template :only (TemplateListView TemplateEditView)]
     [darzana.view.route :only (RouteView RouteEditView)]
-    [darzana.view.api :only (APIListView)]
+    [darzana.view.api :only (APIListView APIShowView)]
     [darzana.model :only (Workspace)]
     [jayq.core :only ($)]))
 
@@ -18,7 +18,9 @@
             ":workspace/route/:router" "routeIndex"
             ":workspace/route/:router/:id/edit" "routeEdit"
             ":workspace/template" "templateList"
-            ":workspace/template/*path/edit" "templateEdit" })
+            ":workspace/template/*path/edit" "templateEdit"
+            ":workspace/api" "apiList"
+            ":workspace/api/*path/show" "apiShow"})
 
         :initialize
         (fn []
@@ -87,6 +89,30 @@
                       (. me switchView
                         (TemplateEditView.
                           (js-obj "workspace" workspace "path" path))))})))))
+        
+        :apiList
+        (fn [ws-name]
+          (this-as me
+            (let [workspace (Workspace. (clj->js {:id ws-name}))]
+              (. workspace fetch
+                (clj->js
+                  { :success
+                    (fn [workspace]
+                      (. me switchView
+                        (APIListView.
+                          (js-obj "workspace" workspace))))})))))
+
+        :apiShow
+        (fn [ws-name api-name]
+          (this-as me
+            (let [workspace (Workspace. (clj->js {:id ws-name}))]
+              (. workspace fetch
+                (clj->js
+                  { :success
+                    (fn [workspace]
+                      (. me switchView
+                        (APIShowView.
+                          (js-obj "workspace" workspace "name" api-name))))})))))
 
         :switchView
         (fn [newView]

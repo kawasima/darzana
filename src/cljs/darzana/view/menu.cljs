@@ -13,20 +13,21 @@
       "events"
       (js-obj
         "change select[name=workspace]" "changeWorkspace"
-        "click a.btn-add" "newWorkspace"
-        "click a.btn-delete" "deleteWorkspace"
-        "click a.btn-active" "activateWorkspace")
+        "click .btn-add"    "newWorkspace"
+        "click .btn-delete" "deleteWorkspace"
+        "click .btn-active" "activateWorkspace"
+        "click .btn-merge"  "mergeWorkspace")
 
       "initialize"
       (fn []
         (this-as me
-          (set! (.-workspace me) (aget (.-options me) "workspace"))
+          (set! (. me -workspace) (.. me -options -workspace))
           (let [workspaceList (WorkspaceList.)]
-            (.on workspaceList "reset"  (.-render me) me)
-            (.on workspaceList "add"    (.-render me) me)
-            (.on workspaceList "delete" (.-render me) me)
-            (set! (.-workspaceList me) workspaceList)
-            (.fetch workspaceList (js-obj "reset" true)))))
+            (. workspaceList on "reset"  (. me -render) me)
+            (. workspaceList on "add"    (. me -render) me)
+            (. workspaceList on "delete" (. me -render) me)
+            (set! (. me -workspaceList) workspaceList)
+            (. workspaceList fetch (clj->js {:reset true})))))
 
       "render"
       (fn []
@@ -34,10 +35,14 @@
           (let [template-fn (.get Handlebars.TemplateLoader "menu")]
             (.html (.-$el me) (template-fn
                                 (js-obj
-                                  "current" (some #(when (aget % "current") %)
+                                  "current" (some #(when (. % -current) %)
                                               (.. me -workspaceList toJSON))
-                                  "workspace"  (.-workspace me)
-                                  "workspaces" (.. me -workspaceList toJSON)))))))
+                                  "head"    (some #(when (. % -head) %)
+                                              (.. me -workspaceList toJSON))
+                                  "workspace"  (. me -workspace)
+                                  "workspaces" (.. me -workspaceList toJSON))))
+            (.. me -$el (tooltip (clj->js { :selector "[data-toggle=tooltip]"
+                                           :container "body"}))))))
 
       "newWorkspace"
       (fn [event]
@@ -65,32 +70,54 @@
                             (js-obj "name" (-> me (.$ ".form-workspace-new [name=name]") (.val))))]
             (try
               (-> me (.-workspaceList) (.add workspace))
-              (.save workspace)
-              (-> me (.$ ".container-btn") (.empty) (.append (.-containerBtn me)))
+              (. workspace save (js-obj)
+                (clj->js
+                  { :success
+                    (fn [model]
+                      (. app navigate
+                        (. model get "name")
+                        (clj->js { :trigger true}))
+                      )}))
               (catch js/Error e (.log js/console (pr-str e))))
             false)))
 
       "activateWorkspace"
       (fn [event]
         (this-as me
-          (if-let [ws (.. me -workspaceList (findWhere (clj->js { :name (.-workspace me)})))]
-            (.save ws (clj->js {:active true}) 
+          (if-let [ws (.. me -workspaceList (findWhere (clj->js { :name (. me -workspace)})))]
+            (. ws save (clj->js {:active true}) 
               (clj->js
                 {:success
                   (fn [model]
-                    (.. me ($ ".text-workspace") (html (. model get "name"))))})))))
+                    (.. me
+                      ($ ".text-workspace")
+                      (html (. model get "name"))
+                      (textillate "start"))
+                    (.. me -workspaceList (fetch (clj->js {:reset true}))))})))))
       
       "changeWorkspace"
       (fn [event]
-        (.navigate app (.val ($ (.-currentTarget event))) (js-obj "trigger" true)))
+        (.navigate app
+          (.val ($ (.-currentTarget event)))
+          (clj->js {:trigger true})))
+
+      "mergeWorkspace"
+      (fn [event]
+        (this-as me))
 
       "deleteWorkspace"
       (fn [event]
         (this-as me
-          (if-let [ws (.. me -workspaceList (findWhere (clj->js { :name (.-workspace me)})))]
+          (if-let [ws (.. me -workspaceList (findWhere (clj->js { :name (. me -workspace)})))]
             (.destroy ws
               (clj->js
                 { :success
-                  (fn []
-                    (.navigate app (.val ($ (.-currentTarget event))) (js-obj "trigger" true)))}))))))))
+                  (fn [model]
+                    (-> me
+                      (.$ (str "select[name=workspace] > option[value=" (. ws get "name") "]"))
+                      (.remove))
+                    (. app navigate
+                      (-> me (.$ "select[name=workspace]") (.val))
+                      (clj->js { :trigger true}))
+                    )}))))))))
 

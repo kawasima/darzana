@@ -6,9 +6,17 @@
     [darzana.api :as api]))
 
 (defroutes routes
-  (compojure/context "/api" []
-    (GET "/" {}
+  (compojure/context "/api/:workspace" {{ws :workspace} :params}
+    (GET "/" []
       { :headers {"Content-Type" "application/json"}
         :body (json/write-str
-                (map (fn [_] {:id _ :name _}) @api/apis))})))
+                (map (fn [_] { :id _ :name _
+                               :workspace ws}) @api/apis))})
+
+    (GET "/*" {params :params}
+      { :headers {"Content-Type" "application/json"}
+        :body (json/write-str
+                (var-get (resolve (symbol (params :*))))
+                :value-fn (fn [k v]
+                              (if (fn? v) (str v) v)))})))
 

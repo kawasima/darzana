@@ -31,21 +31,22 @@
   (apply merge (vals (context :scope))))
 
 (defn- find-in-scopes-inner [context key]
-  (if (string? key) key
+  (cond
+    (string? key) key
+    (number? key) (str key)
+    :else
     (let [keys (if (coll? key)
-               (map name key)
-               (name key))]
-    (first
-      (filter #(not (nil? %))
-        (for [scope-name scope-priorities]
-          (get-in (context :scope) (flatten [scope-name keys])))))))
-  )
+                 (map name key)
+                 (name key))]
+      (first
+        (filter #(not (nil? %))
+          (for [scope-name scope-priorities]
+            (get-in (context :scope) (flatten [scope-name keys]))))))))
 
 (defn find-in-scopes
   ([context key]
     (find-in-scopes-inner context key))
   ([context key not-found]
-    (log/info "find-in-scope: " key)
     (let [ value (find-in-scopes-inner context key) ]
       (if (nil? value) not-found value))))
 

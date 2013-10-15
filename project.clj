@@ -28,7 +28,7 @@
              [lein-cljsbuild "0.3.3"]]
   :source-paths ["src/clj"]
   :test-paths   ["test/clj"]
-  :resource-paths ["lib/*", "resources"]
+  :resource-paths ["resources"]
 
   :cljsbuild
   {

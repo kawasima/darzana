@@ -24,6 +24,10 @@
         :messages
         { :manage-components "Manage components"
           }
+        :titles
+        { :list-templates "List of templates"
+          :list-apis "List of apis"
+          }
         :missing "<Missing translation: [%1$s %2$s %3$s]>"}
       :ja
       { :labels
@@ -40,6 +44,10 @@
           :current-workspace "現在のワークスペース"}
         :messages
         { :manage-components "コンポーネントの管理"
+          }
+        :titles
+        { :list-templates "テンプレート一覧"
+          :list-apis "API一覧"
           }}}
     })
 

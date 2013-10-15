@@ -8,13 +8,13 @@
   (:require
     [clojure.tools.logging :as log]
     [clojure.string :as string]
+    [clojure.java.io :as io]
     [clojure.data.json :as json]
     [compojure.handler :as handler]
     [compojure.route :as route]
     [ring.util.codec :as codec]
     [org.httpkit.client :as http]
     [taoensso.carmine :as car :refer (wcar)]
-    [me.raynes.fs :as fs]
     [darzana.context :as context]
     [darzana.workspace :as workspace]
     [darzana.admin.api]
@@ -25,6 +25,7 @@
 (def default-response-parser (fn [body] (json/read-str body)))
 
 (defmacro defblock [block-name & body]
+  "Define a block component for cljs."
   `(aset js/Blockly.Language ~(name block-name) ~@body))
 
 (def redis-connection {:pool {} :spec {:host "127.0.0.1" :port 6379}})
@@ -84,6 +85,7 @@
 (defn build-request [request context api]
   (merge request
     (when-let [basic-auth (api :basic-auth)]
+      (println basic-auth)
       {:basic-auth [ (context/find-in-scopes context (first  basic-auth))
                      (context/find-in-scopes context (second basic-auth))]})
     {:headers (api/build-request-headers context api)}
@@ -223,9 +225,12 @@
   (reset! darzana.router/route-namespace (create-ns 'app))
   (reset! darzana.router/plugins ['darzana.ab-testing])
   (when-not @admin-app-initialized
+    (let [app-scope (io/file "dev-resources/app_scope.clj")]
+      (when (. app-scope exists) (-> app-scope (.getPath) load-file)))
     (load-file "dev-resources/api.clj")
     (workspace/change-workspace "master")
     (reset! admin-app-initialized true))
   ((handler/site
      (compojure/routes (load-routes) (compojure/context "/admin" [] admin-routes))
      {:session { :store (carmine-store redis-connection) }}) args))
+

@@ -1,7 +1,45 @@
-<li class="list-group-item">
-  <form id="form-template-new" class="form-inline" role="form">
-    <div class="form-group">
-      <input type="text" name="path" class="form-control"/>
-    </div>
-  </form>
-</li>
+<div class="navbar navbar-default">
+  <ul class="nav navbar-nav">
+    <li>
+      <button class="btn btn-back navbar-btn" type="button">Back</button>
+    </li>
+  </ul>
+</div>
+
+<table class="table">
+  <tr>
+    <td>Name</td>
+    <td>{{api.name}}</td>
+  </tr>
+  <tr>
+    <td>URL</td>
+    <td>{{api.method}} {{api.url}}</td>
+  </tr>
+  <tr>
+    <td>Expires</td>
+    <td>{{api.expires}}</td>
+  </tr>  
+  <tr>
+    <td>Query keys</td>
+    <td>{{api.query-keys}}</td>
+  </tr>
+  {{#if api.basic-auth}}
+    <tr>
+      <td>Basic auth</td>
+      <td>{{api.basic-auth}}</td>
+    </tr>
+  {{/if}}
+  {{#if api.oauth-1-authorization}}
+    <tr>
+      <td>Oauth authorization</td>
+      <td>{{api.oauth-1-authorization}}</td>
+    </tr>
+  {{/if}}
+  {{#if api.oauth-token}}
+  <tr>
+    <td>Oauth Token (for Oauth 2.0)</td>
+    <td>{{api.oauth-token}}</td>
+  </tr>
+  {{/if}}
+
+</table>

@@ -11,6 +11,14 @@
   (fn [foo bar]
     (if (= foo bar) "selected='selected'" "")))
 
+(.registerHelper js/Handlebars "if-eq"
+  (fn [a b block]
+    (if (= a b) (. block fn) (. block inverse) )))
+
+(.registerHelper js/Handlebars "if-neq"
+  (fn [a b block]
+    (if-not (= a b) (. block fn) (. block inverse) )))
+
 (.registerHelper js/Handlebars "t"
   (fn [key]
     (t (keyword key))))
@@ -30,9 +38,11 @@
     "menu"
     "route/index" "route/list" "route/edit" "route/new"
     "template/list" "template/edit" "template/new" "template/_list_item"
+    "api/list" "api/show"
     )
   (js-obj
     "complete"
     (fn []
       (set! app (Application.))
       (. Backbone.history start (clj->js { :pushState false })))))
+

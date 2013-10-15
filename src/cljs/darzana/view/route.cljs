@@ -7,7 +7,7 @@
   (:require
     [Blockly :as Blockly])
   (:use-macros
-    [jayq.macros :only [let-ajax]]))
+    [jayq.macros :only [let-ajax let-deferred]]))
 
 (def RouteListView)
 
@@ -28,6 +28,8 @@
                   (fn [routerFile]
                     (-> ($ "<option/>")
                       (.text (.replace routerFile #"\.clj$" "")))))))
+            (if-let [one-route (.. me ($ "select[name=router] option:not(:empty)") first)] 
+              (set! (.. me -options -router) (. one-route val)))
             (if-let [router (.. me -options -router)]
               (-> me
                 (.$ "select[name=router]")
@@ -91,16 +93,18 @@
           (let [ template-fn (. js/Handlebars.TemplateLoader get "route/new")
                  route ($ (template-fn (js-obj)))]
             (.. me ($ ".list-routes") (append route))
-            (.. ($ js/window) (scrollTop (. me offset "top"))))))
+            (.. ($ js/window) (scrollTop (.. route offset -top))))))
 
       "createRoute"
       (fn []
         (this-as me
           (let [route (Route.
-                        (js-obj
-                          "method" (-> me (.$ "#form-route-new [name=route-method]") (.val))
-                          "path"   (-> me (.$ "#form-route-new [name=route-path]")   (.val))
-                          "router" (.. me -collection -router)))]
+                        (clj->js
+                          { :method (-> me (.$ "#form-route-new [name=route-method]") (.val))
+                            :path   (-> me (.$ "#form-route-new [name=route-path]") (.val))
+                            :router (.. me -options -router)
+                            :workspace (.. me -options -workspace -id)
+                            :xml "<xml><block type=\"marga\"></block></xml>"}))]
             (try
               (.. me -collection (add route))
               (.  route save)
@@ -137,16 +141,18 @@
                             me))
             (set! (. me -availableTemplates)
               (TemplateList. (js-obj)
-                (js-obj "url" (str "template/" (.. me -options -workspace -id)))))
+                (clj->js
+                  { :url (str "template/" (.. me -options -workspace -id))})))
 
-            (set! (. me -availableAPIs) (APIList.))
-            (.. me -availableTemplates
-              (on "reset"
-                (fn []
-                  (.. me -availableAPIs (fetch (js-obj "reset" true))))
-                me))
-            (.. me -availableAPIs (on "reset" (aget me "fetchRouter") me))
-            (.. me -availableTemplates (fetch (js-obj "reset" true)))))
+            (set! (. me -availableAPIs)
+              (APIList. (js-obj)
+                (clj->js
+                  { :url (str "api/" (.. me -options -workspace -id))})))
+
+            (let-deferred
+              [ apis      (.. me -availableAPIs      (fetch (clj->js {:reset true})))
+                templates (.. me -availableTemplates (fetch (clj->js {:reset true})))]
+              (.. me -model fetch))))
 
         :render
         (fn []
@@ -178,11 +184,6 @@
             (.domToWorkspace js/Blockly.Xml
               (aget js/Blockly "mainWorkspace")
               (.textToDom js/Blockly.Xml (.. me -model (get "xml"))))))
-
-        :fetchRouter
-        (fn []
-          (this-as me
-            (.. me -model fetch)))
 
         :save
         (fn []

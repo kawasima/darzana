@@ -38,7 +38,7 @@
         :validate
         (fn [attrs options]
           (this-as me
-            (let [dom ($ (. js/jQuery parseXML (.-xml attrs)))]
+            (let [dom ($ (. js/jQuery parseXML (. attrs -xml)))]
               (if (not= (.. dom (find "xml > block") size) 1)
                 "defmarga is only one."))))})))
 
@@ -49,8 +49,10 @@
 
 (def API
   (.extend js/Backbone.Model
-    (js-obj
-      "urlRoot" "api")))
+    (clj->js
+      { :urlRoot
+        (fn [] (this-as me
+                 (str "api/" (.. me (get "workspace") -id))))})))
 
 (def APIList
   (.extend js/Backbone.Collection

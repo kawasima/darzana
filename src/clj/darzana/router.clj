@@ -284,7 +284,7 @@
           (doseq [route routes] (pprint route wrtr))
           (pprint (seq ['defmarga (symbol (get request-body "method")) (get request-body "path")]) wrtr))
         { :headers {"Content-Type" "application/json"}
-          :body (json/write-str (assoc request-body :id (count routes)) request-body)}))
+          :body (json/write-str (assoc request-body :id (count routes)))}))
 
     (DELETE "/:router/:id" [router id :as r]
       (let [ router-path (make-path ws router)

@@ -4,11 +4,13 @@
   </div>
   <div class="panel-body">
     <div class="alert alert-dismissable"> 
-      {{t "labels/current-workspace"}}: <span class="text-workspace">{{current.name}}</span>
+      {{t "labels/current-workspace"}}: <span class="text-workspace" data-in-effect="bounce">{{current.name}}</span>
+      {{#if-neq current.name head.name}}
       <button type="button" class="btn btn-merge">
         <i class="icon-code-fork"></i>
         Merge workspace
       </button>
+      {{/if-neq}}
     </div>
       
     
@@ -24,15 +26,15 @@
       </div>
     </div>
     <div class="pull-right container-btn">
-      <a class="icon-stack btn-active">
+      <a class="icon-stack btn-active" data-toggle="tooltip" data-title="Activate this workspace!">
         <i class="icon-circle-blank icon-stack-base"></i>
         <i class="icon-rocket"></i>
       </a>
-      <a class="icon-stack btn-add">
+      <a class="icon-stack btn-add" data-toggle="tooltip" title="Add new workspace">
         <i class="icon-circle-blank icon-stack-base"></i>
         <i class="icon-plus"></i>
       </a>
-      <a class="icon-stack btn-delete">
+      <a class="icon-stack btn-delete" data-toggle="tooltip" title="Delete this workspace!">
         <i class="icon-circle-blank icon-stack-base"></i>
         <i class="icon-minus"></i>
       </a>

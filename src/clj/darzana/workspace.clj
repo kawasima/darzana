@@ -95,6 +95,7 @@
                              (let [name (clojure.string/replace (.getName _) #"^refs/heads/" "")]
                                { :id name
                                  :name name
+                                 :head    (= name (@config :head))
                                  :current (= name (@config :current))}))
                         (git-branch-list repo))]
         { :headers {"Content-Type" "application/json; charset=UTF-8"}
@@ -112,16 +113,19 @@
     (POST "/" [:as r]
       (let [ request-body (json/read-str (slurp (r :body)))
              name (request-body "name")]
-        (make-workspace name))
-      { :headers {"Content-Type" "application/json; charset=UTF-8"}})
+        (make-workspace name)
+        { :headers {"Content-Type" "application/json; charset=UTF-8"}
+          :body (json/write-str (assoc request-body "id" name))}))
 
     (PUT "/:id" [:as r]
       (let [ request-body (json/read-str (slurp (r :body)))
              name (request-body "name")]
-        (change-workspace name))
-      { :headers {"Content-Type" "application/json; charset=UTF-8"}})
-
+        (change-workspace name)
+        { :headers {"Content-Type" "application/json; charset=UTF-8"}
+          :body (json/write-str request-body)}))
+    
     (DELETE "/:id" [id]
       (delete-workspace id)
-      { :headers {"Content-Type" "application/json; charset=UTF-8"}})))
+      { :headers {"Content-Type" "application/json; charset=UTF-8"}
+        :body (json/write-str {:id id :name id})})))
 

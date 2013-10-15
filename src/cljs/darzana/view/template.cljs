@@ -50,9 +50,9 @@
           (let [ template (Template.
                             (clj->js
                               { :path (.. me ($ "#form-template-new [name=path]") val)
-                                :workspace (.. me -options -workspace)})
+                                :workspace (.. me -options -workspace -id)})
                             (clj->js
-                              { :url (str "template/" (.. me -options -workspace)) }))]
+                              { :url (str "template/" (.. me -options -workspace -id)) }))]
             (try
               (.. me -collection (add template))
               (.  template save)
@@ -73,7 +73,7 @@
           (let [ dest-path (.. me ($ ":input[name=dest_path]") val)
                  src-path  (.. me ($ ":input[name=src_path]")  val)
                  src-template (Template. (clj->js { :id src-path :path src-path
-                                                    :workspace (.. me -options -workspace)})) ]
+                                                    :workspace (.. me -options -workspace -id)})) ]
             (. src-template fetch
               (clj->js
                 { :success
@@ -113,7 +113,7 @@
             (Template. (js-obj
                          "id"        (.. me -options -path)
                          "path"      (.. me -options -path)
-                         "workspace" (.. me -options -workspace toJSON))))
+                         "workspace" (.. me -options -workspace -id))))
           (.. me -model (on "change" (.-render me) me))
           (.. me -model fetch)))
 

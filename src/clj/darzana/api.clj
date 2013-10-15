@@ -18,7 +18,7 @@
 (defn create-api
   "create an api."
   [api]
-  (dosync (alter apis conj api))
+  (dosync (alter apis conj (str *ns* "/" api)))
   { :name (keyword api)
     :url ""
     :query-keys []
@@ -58,6 +58,13 @@
   [api expire]
   (assoc api :expire expire))
 
+(defn headers
+  [api & headers]
+  (assoc api :headers
+    (map #(cond
+            (keyword? %) (assign % %)
+            (vector?  %) %) headers)))
+
 (defn oauth-token
   [api oauth-token]
   (assoc api :oauth-token oauth-token))
@@ -70,7 +77,6 @@
 
 (defn oauth-1-authorization
   [api & oauth-params]
-  (println oauth-params)
   (assoc api :oauth-1-authorization
     (reduce conj {} (map #(cond
                             (vector?  %) [(second %) (first %)]
@@ -84,7 +90,7 @@
 
 
 (defn build-request-headers [context api]
-  (merge {}
+  (apply merge {}
     (when-let [content-type (api :content-type)]
       {"Content-Type" content-type})
     (when (not (or (= (get api :method :get) :get)
@@ -123,6 +129,8 @@
                            (context/find-in-scopes context token-secret)
                            nil)) ]
         {"Authorization" (oauth/authorization-header
-                           (merge unsigned-params {:oauth_signature signature}) "")}))))
+                           (merge unsigned-params {:oauth_signature signature}) "")}))
+    (when-let [headers (api :headers)]
+      (map (fn [_] {(-> _ second name) (context/find-in-scopes context (first _))}) headers))))
 
 

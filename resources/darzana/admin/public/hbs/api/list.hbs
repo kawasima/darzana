@@ -1,13 +1,13 @@
 <div class="panel panel-info">
   <div class="panel-heading">
-    <h4>{{t "titles/list-templates"}}</h4>
+    <h4>{{t "titles/list-apis"}}</h4>
   </div>
   <div class="panel-body">
   </div>
   <ul class="list-group list-templates">
     {{#each apis}}
       <li class="list-group-item">
-        <a href="#{{workspace}}/api/{{name}}">{{name}}</a>
+        <a href="#{{workspace}}/api/{{name}}/show">{{name}}</a>
       </li>
     {{/each}}
   </ul>

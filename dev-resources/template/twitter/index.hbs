@@ -1,0 +1,21 @@
+{{#partial "content"}}
+<div class="page-header">
+  <h1>Clojure is a great language.</h1>
+</div>
+
+<ul class="list-group">
+  {{#each twitter-timeline.statuses}}
+  <li class="list-group-item">
+    <div class="media">
+      <a class="pull-left" href="#">
+        <img class="media-object" src="{{user.profile_image_url}}" alt="{{user.name}}">
+      </a>
+      <div class="media-body">
+        <h4 class="media-heading">{{user.name}}</h4>
+        {{text}}
+      </div>
+    </div>
+  {{/each}}
+</ul>
+{{/partial}}
+{{> layout}}

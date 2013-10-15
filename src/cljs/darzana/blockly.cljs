@@ -129,19 +129,20 @@
       :domToMutation
       (fn [container]
         (this-as me
-          (doseq [x (range 0 (dec (. me -itemCount_)))]
+          (doseq [x (range 0 (. me -itemCount_))]
             (. me removeInput (str "API" x)))
           (set! (.-itemCount_ me)
             (js/parseInt (. container getAttribute "items") 10))
-          (doseq [x (range 0 (dec (. me -itemCount_)))]
+          (doseq [x (range 0 (. me -itemCount_))]
             (let [input (. me appendValueInput (str "API" x))]
+              (.log js/console input)
               (if (= x 0)
-                (.appendTitle input
-                  (Blockly/LANG_LISTS_CREATE_WITH_INPUT_WITH)))))
-          (if (= (.-itemCount_ me) 0)
+                (. input appendTitle
+                  Blockly/LANG_LISTS_CREATE_WITH_INPUT_WITH))))
+          (if (= (. me -itemCount_) 0)
             (-> me
               (.appendDummyInput "EMPTY")
-              (.appendTitle (Blockly/LANG_LISTS_CREATE_EMPTY_TITLE))))))
+              (.appendTitle Blockly/LANG_LISTS_CREATE_EMPTY_TITLE)))))
 
       :decompose
       (fn [workspace]

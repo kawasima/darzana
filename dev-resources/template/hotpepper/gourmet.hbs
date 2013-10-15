@@ -1,0 +1,17 @@
+{{#partial "content"}}
+<h1>{{hotpepper-middle-area/middle_area/name}}のレストラン</h1>
+<ul class="thumbnails row">
+  {{#each hotpepper-gourmet/shop}}
+  <li class="col-md-4">
+    <div class="aui-thumbnail" style="height: 400px;">
+      <img src="{{photo/pc/m}}"/>
+      <div class="caption">
+        <h3>{{name}}</h3>
+        <p>{{catch}}</p>
+      </div>
+    </div>
+  </li>
+  {{/each}}
+</ul>
+{{/partial}}
+{{> layout}}
