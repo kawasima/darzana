@@ -1,5 +1,5 @@
 (defproject net.unit8/darzana "0.1.0-RC1"
-  :description "FIXME: write description"
+  :description "Mashup framework with visual editor, auto versioning."
   :url "http://github.com/kawasima/darzana/"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
