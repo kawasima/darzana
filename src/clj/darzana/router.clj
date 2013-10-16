@@ -108,7 +108,7 @@
                   [:value {:name (str "KEY" i)}
                     (if (seq? _)
                       (serialize-component _ nil)
-                      [:block {:type "key_keyword"} [:title {:name (name _) }]])])
+                      [:block {:type "key_keyword"} [:title {:name "KEYWORD"} (name _)]])])
                 (drop 1 s)) ]]
     (if (empty? r) elm
       (conj elm [:next (serialize-component (first r) (rest r))]))))
