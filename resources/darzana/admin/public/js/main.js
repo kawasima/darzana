@@ -30041,9 +30041,18 @@ darzana.view.menu.MenuView = Backbone.View.extend({el:jayq.core.$.call(null, "\x
 }, changeWorkspace:function(a) {
   return darzana.global.app.navigate(jayq.core.$.call(null, a.currentTarget).val(), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "trigger", "trigger", 4248979754), !0], !0)))
 }, mergeWorkspace:function(a) {
-  a = this.workspaceList.findWhere(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "name", "name", 1017277949), this.workspace], !0)));
+  var b = this;
+  a = b.workspaceList.findWhere(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "name", "name", 1017277949), b.workspace], !0)));
   return cljs.core.truth_(a) ? (a.url = [cljs.core.str("workspace/"), cljs.core.str(a.get("id")), cljs.core.str("/merge")].join(""), a.save({}, cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
-    return console.log("merged!")
+    b.$(".label-merge-status").label("success", "Merged!");
+    return setTimeout(function() {
+      return b.$(".label-merge-status").label("default", "")
+    }, 1500)
+  }, new cljs.core.Keyword(null, "error", "error", 1110689146), function() {
+    b.$(".label-merge-status").label("danger", "Failed!");
+    return setTimeout(function() {
+      return b.$(".label-merge-status").label("default", "")
+    }, 1500)
   }], !0)))) : null
 }, deleteWorkspace:function(a) {
   var b = this, c = b.workspaceList.findWhere(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "name", "name", 1017277949), b.workspace], !0)));
