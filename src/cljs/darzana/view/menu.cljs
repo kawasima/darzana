@@ -110,7 +110,17 @@
               (clj->js
                 { :success
                   (fn [model]
-                    (.log js/console "merged!"))})))))
+                    (.. me ($ ".label-merge-status") (label "success" "Merged!"))
+                    (js/setTimeout
+                      (fn [] (.. me ($ ".label-merge-status") (label "default" "")))
+                      1500))
+
+                  :error
+                  (fn []
+                    (.. me ($ ".label-merge-status") (label "danger" "Failed!"))
+                    (js/setTimeout
+                      (fn [] (.. me ($ ".label-merge-status") (label "default" "")))
+                      1500))})))))
 
       "deleteWorkspace"
       (fn [event]
