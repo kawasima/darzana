@@ -30001,8 +30001,8 @@ darzana.view.menu.MenuView = Backbone.View.extend({el:jayq.core.$.call(null, "\x
   var a = Handlebars.TemplateLoader.get("menu");
   this.$el.html(a.call(null, {current:cljs.core.some.call(null, function(a) {
     return cljs.core.truth_(a.current) ? a : null
-  }, this.workspaceList.toJSON()), head:cljs.core.some.call(null, function(a) {
-    return cljs.core.truth_(a.head) ? a : null
+  }, this.workspaceList.toJSON()), "default":cljs.core.some.call(null, function(a) {
+    return cljs.core.truth_(a["default"]) ? a : null
   }, this.workspaceList.toJSON()), workspace:this.workspace, workspaces:this.workspaceList.toJSON()}));
   return this.$el.tooltip(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "selector", "selector", 2205476689), "[data-toggle\x3dtooltip]", new cljs.core.Keyword(null, "container", "container", 602947571), "body"], !0)))
 }, newWorkspace:function(a) {
@@ -30041,7 +30041,10 @@ darzana.view.menu.MenuView = Backbone.View.extend({el:jayq.core.$.call(null, "\x
 }, changeWorkspace:function(a) {
   return darzana.global.app.navigate(jayq.core.$.call(null, a.currentTarget).val(), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "trigger", "trigger", 4248979754), !0], !0)))
 }, mergeWorkspace:function(a) {
-  return null
+  a = this.workspaceList.findWhere(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "name", "name", 1017277949), this.workspace], !0)));
+  return cljs.core.truth_(a) ? (a.url = [cljs.core.str("workspace/"), cljs.core.str(a.get("id")), cljs.core.str("/merge")].join(""), a.save({}, cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
+    return console.log("merged!")
+  }], !0)))) : null
 }, deleteWorkspace:function(a) {
   var b = this, c = b.workspaceList.findWhere(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "name", "name", 1017277949), b.workspace], !0)));
   return cljs.core.truth_(c) ? c.destroy(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {

@@ -7,7 +7,7 @@
     [jayq.core :only [$]]))
 
 (def MenuView
-  (.extend js/Backbone.View
+  (. js/Backbone.View extend
     (js-obj
       "el" ($ "<div id='page-menu'/>")
       "events"
@@ -32,12 +32,12 @@
       "render"
       (fn []
         (this-as me
-          (let [template-fn (.get Handlebars.TemplateLoader "menu")]
+          (let [template-fn (. js/Handlebars.TemplateLoader get "menu")]
             (.html (.-$el me) (template-fn
                                 (js-obj
                                   "current" (some #(when (. % -current) %)
                                               (.. me -workspaceList toJSON))
-                                  "head"    (some #(when (. % -head) %)
+                                  "default" (some #(when (aget % "default") %)
                                               (.. me -workspaceList toJSON))
                                   "workspace"  (. me -workspace)
                                   "workspaces" (.. me -workspaceList toJSON))))
@@ -103,13 +103,20 @@
 
       "mergeWorkspace"
       (fn [event]
-        (this-as me))
+        (this-as me
+          (when-let [ws (.. me -workspaceList (findWhere (clj->js { :name (. me -workspace)})))]
+            (set! (. ws -url) (str "workspace/" (. ws get "id") "/merge"))
+            (. ws save (js-obj)
+              (clj->js
+                { :success
+                  (fn [model]
+                    (.log js/console "merged!"))})))))
 
       "deleteWorkspace"
       (fn [event]
         (this-as me
           (if-let [ws (.. me -workspaceList (findWhere (clj->js { :name (. me -workspace)})))]
-            (.destroy ws
+            (. ws destroy
               (clj->js
                 { :success
                   (fn [model]

@@ -5,7 +5,7 @@
   <div class="panel-body">
     <div class="alert alert-dismissable"> 
       {{t "labels/current-workspace"}}: <span class="text-workspace" data-in-effect="bounce">{{current.name}}</span>
-      {{#if-neq current.name head.name}}
+      {{#if-neq current.name default.name}}
       <button type="button" class="btn btn-merge">
         <i class="icon-code-fork"></i>
         Merge workspace
