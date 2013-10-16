@@ -3,6 +3,11 @@
 darzana (ダルシャナ) は、Web APIをデータソースとしたWebアプリケーションを手軽に作る
 ためのフレームワークです。
 
+視覚的に処理ブロックを組み立てることで、簡単にマッシュアップアプリケーションを作ることができます。
+![Alt text](http://kawasima.github.io/darzana/images/darzana-2.png)
+
+![Alt text](http://kawasima.github.io/darzana/images/darzana-1.png)
+
 ## アーキテクチャ
 
 APIを組み合わせて、Webアプリケーションを作るために、darzana は以下の機能を持ちます。
@@ -13,6 +18,24 @@ APIを組み合わせて、Webアプリケーションを作るために、darza
   * APIレスポンスのキャッシュ
   * Content-Typeに応じたリクエスト/レスポンス (フォームURLエンコーディング, JSON, XML)
 * テンプレートレンダリング (Handlebars を使ってレンダリングできます)
+* Gitによるオートバージョニング
+* A/Bテスト
+
+## Install
+
+redis 2.6以上が必要です。現状デフォルトポートで起動しておいてください。
+
+leiningenをインストールし、以下のコマンドでTwitterタイムライン表示のサンプルアプリケーションが起動します。
+
+```
+% lein new darzana [Your application name]
+% cd [Your application name]
+% lein ring server
+```
+
+http://localhost:3000/admin/index.html で管理ページが開きます。ここでルーティングやテンプレートの内容を確認できます。
+デフォルトのmasterブランチはRead Onlyですが、そこからフォークしてブランチを新たに作れば、
+サンプルアプリを編集することができます。
 
 ## Get started
 
