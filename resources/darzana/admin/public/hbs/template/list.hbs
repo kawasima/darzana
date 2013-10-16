@@ -3,14 +3,18 @@
     <h4>List of template</h4>
   </div>
   <div class="panel-body">
+    {{#unless workspace/default}}
     <a class="icon-stack btn-add">
       <i class="icon-circle-blank icon-stack-base"></i>
       <i class="icon-plus"></i>
     </a>
+    {{/unless}}
   </div>
   <ul class="list-group list-templates">
     {{#each templates}}
-    {{> template/_list_item}}
+      {{#include parent=..}}
+        {{> template/_list_item}}
+      {{/include}}
     {{/each}}
   </ul>
 </div>

@@ -34,7 +34,8 @@
           (let [template-fn (. js/Handlebars.TemplateLoader get "template/list")]
             (.. me -$el (html (template-fn
                                 (js-obj
-                                  "templates" (.. me -collection toJSON))))))))
+                                  "templates" (.. me -collection toJSON)
+                                  "workspace" (.. me -options -workspace toJSON))))))))
 
       "newTemplate"
       (fn [event]
@@ -121,13 +122,17 @@
       (fn []
         (this-as me
           (let [template-fn (.get js/Handlebars.TemplateLoader "template/edit")]
-            (.. me -$el (html (template-fn (.. me -model toJSON)))))
+            (.. me -$el (html (template-fn
+                                (clj->js
+                                  { :template  (.. me -model toJSON)
+                                    :workspace (.. me -options -workspace toJSON)})))))
           (set! (.-codeMirror me )
             (.fromTextArea js/CodeMirror
               (first (.$ me "textarea[name=hbs]"))
               (js-obj
                 "mode" "mustache"
-                "lineNumbers" true)))))
+                "lineNumbers" true
+                "readOnly" (.. me -options -workspace (get "default")))))))
 
       "save"
       (fn []

@@ -29634,7 +29634,7 @@ darzana.view.template.TemplateListView = Backbone.View.extend({el:jayq.core.$.ca
   return this.collection.fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "reset", "reset", 1122308289), !0], !0)))
 }, render:function() {
   var a = Handlebars.TemplateLoader.get("template/list");
-  return this.$el.html(a.call(null, {templates:this.collection.toJSON()}))
+  return this.$el.html(a.call(null, {templates:this.collection.toJSON(), workspace:this.options.workspace.toJSON()}))
 }, newTemplate:function(a) {
   a = Handlebars.TemplateLoader.get("template/new");
   a = jayq.core.$.call(null, a.call(null, {}));
@@ -29679,8 +29679,8 @@ darzana.view.template.TemplateEditView = Backbone.View.extend({el:jayq.core.$.ca
   return this.model.fetch()
 }, render:function() {
   var a = Handlebars.TemplateLoader.get("template/edit");
-  this.$el.html(a.call(null, this.model.toJSON()));
-  return this.codeMirror = CodeMirror.fromTextArea(cljs.core.first.call(null, this.$("textarea[name\x3dhbs]")), {mode:"mustache", lineNumbers:!0})
+  this.$el.html(a.call(null, cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "template", "template", 3987324908), this.model.toJSON(), new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), this.options.workspace.toJSON()], !0))));
+  return this.codeMirror = CodeMirror.fromTextArea(cljs.core.first.call(null, this.$("textarea[name\x3dhbs]")), {mode:"mustache", lineNumbers:!0, readOnly:this.options.workspace.get("default")})
 }, save:function() {
   var a = this;
   a.model.save("hbs", a.codeMirror.getValue(), {success:function(b) {
@@ -29777,10 +29777,10 @@ Blockly.Language.api_list = cljs.core.clj__GT_js.call(null, cljs.core.Persistent
   b = null;
   for(d = c = 0;;) {
     if(d < c) {
-      e = cljs.core._nth.call(null, b, d), f = this.appendValueInput([cljs.core.str("API"), cljs.core.str(e)].join("")), console.log(f), cljs.core._EQ_.call(null, e, 0) && f.appendTitle(Blockly.LANG_LISTS_CREATE_WITH_INPUT_WITH), d += 1
+      e = cljs.core._nth.call(null, b, d), f = this.appendValueInput([cljs.core.str("API"), cljs.core.str(e)].join("")), cljs.core._EQ_.call(null, e, 0) && f.appendTitle(Blockly.LANG_LISTS_CREATE_WITH_INPUT_WITH), d += 1
     }else {
       if(a = cljs.core.seq.call(null, a)) {
-        cljs.core.chunked_seq_QMARK_.call(null, a) ? (c = cljs.core.chunk_first.call(null, a), a = cljs.core.chunk_rest.call(null, a), b = c, c = cljs.core.count.call(null, c)) : (b = cljs.core.first.call(null, a), c = this.appendValueInput([cljs.core.str("API"), cljs.core.str(b)].join("")), console.log(c), cljs.core._EQ_.call(null, b, 0) && c.appendTitle(Blockly.LANG_LISTS_CREATE_WITH_INPUT_WITH), a = cljs.core.next.call(null, a), b = null, c = 0), d = 0
+        cljs.core.chunked_seq_QMARK_.call(null, a) ? (c = cljs.core.chunk_first.call(null, a), a = cljs.core.chunk_rest.call(null, a), b = c, c = cljs.core.count.call(null, c)) : (b = cljs.core.first.call(null, a), c = this.appendValueInput([cljs.core.str("API"), cljs.core.str(b)].join("")), cljs.core._EQ_.call(null, b, 0) && c.appendTitle(Blockly.LANG_LISTS_CREATE_WITH_INPUT_WITH), a = cljs.core.next.call(null, a), b = null, c = 0), d = 0
       }else {
         break
       }
@@ -29968,7 +29968,7 @@ darzana.view.route.RouteEditView = Backbone.View.extend(cljs.core.clj__GT_js.cal
       return[a.id, a.name]
     }))
   };
-  Blockly.inject(document.getElementById("marga-blockly"), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "path", "path", 1017337751), "./", new cljs.core.Keyword(null, "toolbox", "toolbox", 4168777893), document.getElementById("marga-toolbox"), new cljs.core.Keyword(null, "trashcan", "trashcan", 2299073802), !1, new cljs.core.Keyword(null, "readOnly", "readOnly", 4441187796), a.options.workspace.get("head"), new cljs.core.Keyword(null, "collapse", 
+  Blockly.inject(document.getElementById("marga-blockly"), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "path", "path", 1017337751), "./", new cljs.core.Keyword(null, "toolbox", "toolbox", 4168777893), document.getElementById("marga-toolbox"), new cljs.core.Keyword(null, "trashcan", "trashcan", 2299073802), !1, new cljs.core.Keyword(null, "readOnly", "readOnly", 4441187796), a.options.workspace.get("default"), new cljs.core.Keyword(null, "collapse", 
   "collapse", 4676785951), !0, new cljs.core.Keyword(null, "scrollbars", "scrollbars", 1080603263), !1], !0)));
   return Blockly.Xml.domToWorkspace(Blockly.mainWorkspace, Blockly.Xml.textToDom(a.model.get("xml")))
 }, new cljs.core.Keyword(null, "save", "save", 1017427183), function() {
@@ -30210,6 +30210,28 @@ darzana.repl.connect = function() {
 };
 goog.exportSymbol("darzana.repl.connect", darzana.repl.connect);
 darzana.boot = {};
+Handlebars.registerHelper("include", function(a) {
+  var b = {}, c = function(a) {
+    return function(b) {
+      for(var c = cljs.core.seq.call(null, cljs.core.keys.call(null, cljs.core.js__GT_clj.call(null, b))), g = null, h = 0, k = 0;;) {
+        if(k < h) {
+          var l = cljs.core._nth.call(null, g, k);
+          a[l] = b[l];
+          k += 1
+        }else {
+          if(c = cljs.core.seq.call(null, c)) {
+            g = c, cljs.core.chunked_seq_QMARK_.call(null, g) ? (c = cljs.core.chunk_first.call(null, g), h = cljs.core.chunk_rest.call(null, g), g = c, l = cljs.core.count.call(null, c), c = h, h = l) : (l = cljs.core.first.call(null, g), a[l] = b[l], c = cljs.core.next.call(null, g), g = null, h = 0), k = 0
+          }else {
+            return null
+          }
+        }
+      }
+    }
+  }(b);
+  c.call(null, this);
+  c.call(null, a.hash);
+  return a.fn(b)
+});
 Handlebars.registerHelper("selected", function(a, b) {
   return cljs.core._EQ_.call(null, a, b) ? "selected\x3d'selected'" : ""
 });

@@ -3,12 +3,14 @@
     <li>
       <button class="btn btn-back navbar-btn" type="button">Back</button>
     </li>
+    {{#unless workspace.default}}
     <li>
       <button class="btn btn-primary btn-save navbar-btn" type="button"><i class="icon-save icon-large"></i>Save</button>
       <span class="label label-comm-status"></span>
     </li>
+    {{/unless}}
   </ul>
 </div>
 
-<h4>{{path}}</h4>
-<textarea name="hbs">{{hbs}}</textarea>
+<h4>{{template.path}}</h4>
+<textarea name="hbs">{{template.hbs}}</textarea>

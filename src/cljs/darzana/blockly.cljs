@@ -135,7 +135,6 @@
             (js/parseInt (. container getAttribute "items") 10))
           (doseq [x (range 0 (. me -itemCount_))]
             (let [input (. me appendValueInput (str "API" x))]
-              (.log js/console input)
               (if (= x 0)
                 (. input appendTitle
                   Blockly/LANG_LISTS_CREATE_WITH_INPUT_WITH))))

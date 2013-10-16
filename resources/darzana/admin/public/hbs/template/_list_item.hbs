@@ -1,5 +1,6 @@
 <li class="list-group-item">
   <a href="#{{workspace}}/template/{{path}}/edit">{{path}}</a>
+  {{#unless parent/workspace/default}}
   <div class="pull-right">
     <a class="icon-stack btn-open-modal-copy" href="#modal-template-copy"
       data-toggle="modal" data-template-id="{{path}}">
@@ -11,4 +12,5 @@
       <i class="icon-minus"></i>
     </a>
   </div>
+  {{/unless}}
 </li>

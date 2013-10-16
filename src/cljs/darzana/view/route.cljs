@@ -178,7 +178,7 @@
                 { :path     "./"
                   :toolbox  (.getElementById js/document "marga-toolbox")
                   :trashcan false
-                  :readOnly (.. me -options -workspace (get "head"))
+                  :readOnly (.. me -options -workspace (get "default"))
                   :collapse true
                   :scrollbars false }))
             (.domToWorkspace js/Blockly.Xml

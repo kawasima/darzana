@@ -7,6 +7,17 @@
 ;;;
 ;;; Setting for handebars helpers
 ;;;
+(.registerHelper js/Handlebars "include"
+  (fn [options]
+    (this-as me
+      (let [ context (js-obj)
+             mergeContext (fn [obj] (doseq [k (keys (js->clj obj))]
+                                      (aset context k (aget obj k))))]
+        (mergeContext me)
+        (mergeContext (. options -hash))
+        (. options fn context)))
+    ))
+
 (.registerHelper js/Handlebars "selected"
   (fn [foo bar]
     (if (= foo bar) "selected='selected'" "")))

@@ -32,11 +32,11 @@
 (defmacro ab-testing-participate [context test-id & alternatives]
   (let [ alt-names (vec (map second alternatives))]
     `(let [ 
-            ctx# (if-let [ client-id# (get-in ~context [:scope :cookies "darzana-client-id"])]
+            ctx# (if-let [ client-id# (get-in ~context [:scope :cookies "darzana-client-id" :value])]
                    ~context
-                   (assoc-in ~context [:scope :cookies "darzana-client-id"]
+                   (assoc-in ~context [:scope :cookies "darzana-client-id" :value]
                      (str (java.util.UUID/randomUUID))))
-            client-id# (get-in ctx# [:scope :cookies "darzana-client-id"])
+            client-id# (get-in ctx# [:scope :cookies "darzana-client-id" :value])
             alt-name# (participate-sixpack ~test-id client-id# ~alt-names) ]
        (reduce merge (for [alt-clause# [~@alternatives]] (alt-clause# ctx# alt-name#))))))
 
