@@ -16,7 +16,8 @@
         "click .btn-add"    "newWorkspace"
         "click .btn-delete" "deleteWorkspace"
         "click .btn-active" "activateWorkspace"
-        "click .btn-merge"  "mergeWorkspace")
+        "click .btn-merge"  "mergeWorkspace"
+        "click .clone-url-box input" "selectCloneUrl")
 
       "initialize"
       (fn []
@@ -33,14 +34,20 @@
       (fn []
         (this-as me
           (let [template-fn (. js/Handlebars.TemplateLoader get "menu")]
-            (.html (.-$el me) (template-fn
-                                (js-obj
-                                  "current" (some #(when (. % -current) %)
-                                              (.. me -workspaceList toJSON))
-                                  "default" (some #(when (aget % "default") %)
-                                              (.. me -workspaceList toJSON))
-                                  "workspace"  (. me -workspace)
-                                  "workspaces" (.. me -workspaceList toJSON))))
+            (.. me -$el
+              (html
+                (template-fn
+                  (clj->js
+                    { :current (some #(when (. % -current) %)
+                                 (.. me -workspaceList toJSON))
+                      :default (some #(when (aget % "default") %)
+                                  (.. me -workspaceList toJSON))
+                      :workspace  (. me -workspace)
+                      :workspaces (.. me -workspaceList toJSON)
+                      :cloneUrl (str
+                                  (.. js/location -href (replace #"/[^/]*$" ""))
+                                  "/darzana-app.git")}
+                    ))))
             (.. me -$el (tooltip (clj->js { :selector "[data-toggle=tooltip]"
                                            :container "body"}))))))
 
@@ -136,5 +143,10 @@
                     (. app navigate
                       (-> me (.$ "select[name=workspace]") (.val))
                       (clj->js { :trigger true}))
-                    )}))))))))
+                    )})))))
+
+      "selectCloneUrl"
+      (fn [event]
+        (this-as me
+          (.. ($ (. event -currentTarget)) select))))))
 

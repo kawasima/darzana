@@ -17,7 +17,10 @@
           :error "error"
           :alternative "alternative"
           :convert "Convert"
-          :current-workspace "Current workspace" }
+          :current-workspace "Current workspace"
+          :saving "Saving..."
+          :saved-successfully "Saved!"
+          :failed "Failed"}
         :buttons
         { :save "Save"
           :back "Back" }

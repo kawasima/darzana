@@ -1,3 +1,3 @@
 (ns darzana.global)
 
-(def app)
+(declare app)

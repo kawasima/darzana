@@ -11,7 +11,8 @@
                   [com.taoensso/carmine "2.2.0"] ;;redis
                   [me.raynes/fs "1.4.4"]
                   [clj-oauth "1.4.1"] ;; for Oauth 1.0a support
-                  [clj-jgit "0.5.0"] ;; git
+                  [clj-jgit "0.6.1"] ;; git
+                  [net.unit8/gring "0.1.0-SNAPSHOT"] ;; git-server
                   [net.sf.json-lib/json-lib "2.4" :classifier "jdk15"] ;; XML -> JSON
                   [xom/xom "1.2.5"]
                   [org.clojure/data.xml "0.0.7"]

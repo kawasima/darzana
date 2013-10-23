@@ -3,17 +3,26 @@
     <h4>{{t "messages/manage-components"}}</h4>
   </div>
   <div class="panel-body">
-    <div class="alert alert-dismissable"> 
-      {{t "labels/current-workspace"}}: <span class="text-workspace" data-in-effect="bounce">{{current.name}}</span>
-      {{#if-neq current.name default.name}}
-      <button type="button" class="btn btn-merge">
-        <i class="icon-code-fork"></i>
-        Merge workspace
-      </button>
-      {{/if-neq}}
-      <span class="label label-merge-status"></span>
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="alert alert-dismissable"> 
+          {{t "labels/current-workspace"}}: <span class="text-workspace" data-in-effect="bounce">{{current.name}}</span>
+          {{#if-neq current.name default.name}}
+            <button type="button" class="btn btn-merge">
+              <i class="icon-code-fork"></i>
+              Merge workspace
+            </button>
+          {{/if-neq}}
+          <span class="label label-merge-status"></span>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="clone-url-box input-group pull-right">
+          <span class="input-group-addon">HTTP</span>
+          <input type="text" class="form-control" readonly="readonly" value="{{cloneUrl}}"/>
+        </div>
+      </div>
     </div>
-      
     
     <div class="select-container">
       <div class="select-content">

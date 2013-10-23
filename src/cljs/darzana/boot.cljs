@@ -1,13 +1,13 @@
 (ns darzana.boot
   (:use
-    [darzana.router :only (Application)]
     [darzana.global :only (app)]
+    [darzana.router :only (Application)]
     [darzana.i18n :only [t]]))
 
 ;;;
 ;;; Setting for handebars helpers
 ;;;
-(.registerHelper js/Handlebars "include"
+(. js/Handlebars registerHelper "include"
   (fn [options]
     (this-as me
       (let [ context (js-obj)
@@ -18,19 +18,19 @@
         (. options fn context)))
     ))
 
-(.registerHelper js/Handlebars "selected"
+(. js/Handlebars registerHelper "selected"
   (fn [foo bar]
     (if (= foo bar) "selected='selected'" "")))
 
-(.registerHelper js/Handlebars "if-eq"
+(. js/Handlebars registerHelper "if-eq"
   (fn [a b block]
     (if (= a b) (. block fn) (. block inverse) )))
 
-(.registerHelper js/Handlebars "if-neq"
+(. js/Handlebars registerHelper "if-neq"
   (fn [a b block]
     (if-not (= a b) (. block fn) (. block inverse) )))
 
-(.registerHelper js/Handlebars "t"
+(. js/Handlebars registerHelper "t"
   (fn [key]
     (t (keyword key))))
 

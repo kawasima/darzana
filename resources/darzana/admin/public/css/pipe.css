@@ -91,3 +91,8 @@
 .text-workspace {
     font-size: 16pt;
 }
+
+#page-menu .clone-url-box input {
+    background-color: #fff;
+}
+

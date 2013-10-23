@@ -12,12 +12,13 @@
     [clojure.data.json :as json]
     [compojure.handler :as handler]
     [compojure.route :as route]
+    [ring.util.response :as response]
     [ring.util.codec :as codec]
     [org.httpkit.client :as http]
     [taoensso.carmine :as car :refer (wcar)]
     [darzana.context :as context]
     [darzana.workspace :as workspace]
-    [darzana.admin.api]
+    [darzana.admin router template api git]
     [darzana.api :as api])
   (:import
     [net.sf.json.xml XMLSerializer]))
@@ -212,11 +213,13 @@
 
 (def admin-routes
   (compojure/routes
-    darzana.template/routes
-    darzana.router/routes
+    darzana.admin.template/routes
+    darzana.admin.router/routes
     darzana.admin.api/routes
+    darzana.admin.git/routes
     darzana.workspace/routes
-    (GET "*/" {params :params} (ring.util.response/redirect (str (params :*) "/index.html")))
+    (GET "/" [] (response/resource-response "index.html"
+                  {:root "darzana/admin/public"}))
     (route/resources "/" {:root "darzana/admin/public"} )))
 
 (def admin-app-initialized (atom nil))
