@@ -44,10 +44,12 @@
         <i class="icon-circle-blank icon-stack-base"></i>
         <i class="icon-plus"></i>
       </a>
+      {{#if-neq current.name default.name}}
       <a class="icon-stack btn-delete" data-toggle="tooltip" title="Delete this workspace!">
         <i class="icon-circle-blank icon-stack-base"></i>
         <i class="icon-minus"></i>
       </a>
+      {{/if-neq}}
     </div>
   </div>
   <ul class="list-group">
