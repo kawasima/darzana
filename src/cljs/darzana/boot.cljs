@@ -30,6 +30,10 @@
   (fn [a b block]
     (if-not (= a b) (. block fn) (. block inverse) )))
 
+(. js/Handlebars registerHelper "keywordToName"
+  (fn [key]
+    (.substring key 1)))
+
 (. js/Handlebars registerHelper "t"
   (fn [key]
     (t (keyword key))))

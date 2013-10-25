@@ -48,8 +48,7 @@
                                   (.. js/location -href (replace #"/[^/]*$" ""))
                                   "/darzana-app.git")}
                     ))))
-            (.. me -$el (tooltip (clj->js { :selector "[data-toggle=tooltip]"
-                                           :container "body"}))))))
+            (.. me -$el (tooltip (clj->js { :selector "[data-toggle=tooltip]" }))))))
 
       "newWorkspace"
       (fn [event]
@@ -68,7 +67,8 @@
               (.animate
                 (js-obj "width" "50%")
                 (js-obj "duration" 1000
-                  "complete" (fn [] (jq/trigger input "focus"))))))))
+                  "complete" (fn [] (jq/trigger input "focus"))))))
+          (.. ($ (event currentTarget)) (tooltip "hide"))))
 
       "createWorkspace"
       (fn [event]
@@ -100,7 +100,8 @@
                       ($ ".text-workspace")
                       (html (. model get "name"))
                       (textillate "start"))
-                    (.. me -workspaceList (fetch (clj->js {:reset true}))))})))))
+                    (.. me -workspaceList (fetch (clj->js {:reset true}))))}))
+            (.. ($ (event currentTarget)) (tooltip "hide")))))
       
       "changeWorkspace"
       (fn [event]
@@ -143,7 +144,8 @@
                     (. app navigate
                       (-> me (.$ "select[name=workspace]") (.val))
                       (clj->js { :trigger true}))
-                    )})))))
+                    )}))
+            (.. ($ (event currentTarget)) (tooltip "hide")))))
 
       "selectCloneUrl"
       (fn [event]

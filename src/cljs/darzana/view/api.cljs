@@ -2,7 +2,9 @@
   (:use
     [darzana.global :only (app)]
     [darzana.model :only (API APIList)]
-    [jayq.core :only ($)]))
+    [darzana.debug :only (formatJSON)]
+    [jayq.core :only ($)])
+  (:use-macros [jayq.macros :only [let-ajax]]))
 
 (def APIListView
   (.extend js/Backbone.View
@@ -38,7 +40,8 @@
     (clj->js
       { :el ($ "<div id='page-api-show'/>") 
         :events (js-obj
-                  "click .btn-back" "back")
+                  "click .btn-back" "back"
+                  "click .btn-execute" "exec")
         :initialize
         (fn []
           (this-as me
@@ -57,6 +60,20 @@
                                   (clj->js
                                     { :workspace (.. me -options -workspace)
                                       :api (.. me -model toJSON) })))))))
+        :exec
+        (fn []
+          (this-as me
+            (.. me ($ ".btn-execute") (addClass ".disabled"))
+            (.. me ($ ".api-execute-result") (html ($ "<img src=\"img/loader.gif\"/>")))
+            (let-ajax [data { :url (str "api/"
+                                     (.. me -options -workspace -id)
+                                     "/"
+                                     (.. me -model -id))
+                              :data (.. me ($ ".form-api") serialize)
+                              :method "post"}]
+              (.. me ($ ".btn-execute") (addClass ".disabled"))
+              (.. me ($ ".api-execute-result") (html (formatJSON data))))))
+
         :back
         (fn []
           (this-as me

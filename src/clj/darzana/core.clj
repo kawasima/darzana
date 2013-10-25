@@ -1,7 +1,7 @@
 (ns darzana.core
   (:use
-    [compojure.core :as compojure :only (GET POST ANY defroutes)]
     [clojure.tools.nrepl.server :only (start-server stop-server)]
+    [compojure.core :as compojure :only (GET)]
     [darzana.template :only (handlebars)]
     [darzana.router :only (load-app-routes)]
     [taoensso.carmine.ring :only [carmine-store]])
@@ -10,26 +10,23 @@
     [clojure.string :as string]
     [clojure.java.io :as io]
     [clojure.data.json :as json]
+    [compojure.core :as compojure]
     [compojure.handler :as handler]
     [compojure.route :as route]
     [ring.util.response :as response]
-    [ring.util.codec :as codec]
     [org.httpkit.client :as http]
     [taoensso.carmine :as car :refer (wcar)]
     [darzana.context :as context]
     [darzana.workspace :as workspace]
-    [darzana.admin router template api git]
-    [darzana.api :as api])
-  (:import
-    [net.sf.json.xml XMLSerializer]))
-
-(def default-response-parser (fn [body] (json/read-str body)))
+    [darzana.admin router template api git workspace]
+    [darzana.api :as api]))
 
 (defmacro defblock [block-name & body]
   "Define a block component for cljs."
   `(aset js/Blockly.Language ~(name block-name) ~@body))
 
-(def redis-connection {:pool {} :spec {:host "127.0.0.1" :port 6379}})
+(def ^:dynamic redis-connection {:pool {} :spec {:host "127.0.0.1" :port 6379}})
+
 (defmacro wcar* [& body]
   "Redis context wrapper"
   `(car/wcar redis-connection ~@body))
@@ -38,62 +35,8 @@
   (dosync
     (ref-set context/application-scope scope)))
 
-(defn replace-url-variable [url context]
-  (string/replace url #":([A-Za-z_]\w*)"
-    #(context/find-in-scopes context (-> % second keyword) "")))
-
-(defn build-query-string [context api]
-  (string/join "&"
-    (map #(str (-> % second name) "=" (context/find-in-scopes context (first %))) (:query-keys api))))
-
-(defn build-url [context api]
-  (let [base-url (replace-url-variable (api :url) context)]
-    (if (= (api :method) :get)
-      (str base-url
-        (if-not (or (.contains base-url "?" ) (empty? (api :query-keys))) "?")
-        (build-query-string context api))
-      base-url)))
-
-(defn strip-content-type [f]
-  (let [parts (string/split (if (nil? f) "" f) #"\s*;\s*")]
-    (when (not (empty? parts))
-      (first parts))))
-
-(defn parse-response [response]
-  (let [ content-type (strip-content-type (-> response :headers :content-type))
-         body (response :body) ]
-    (cond
-      (re-find #"/xml$"  content-type) (.read (XMLSerializer.) body) 
-      (re-find #"/json$" content-type) (json/read-str body)
-      (re-find #"/x-www-form-urlencoded" content-type) (codec/form-decode
-                                                         (cond
-                                                           (string? body) body
-                                                           (instance? java.io.InputStream body) (slurp body)))
-      (re-find #"^text/plain$" content-type) body
-      (empty? body) {}
-      :else (default-response-parser body))))
-
-(defn build-request-body [context api]
-  (cond 
-    (re-find #"/json$" (get api :content-type ""))
-    (json/write-str
-      (reduce #(assoc %1 (-> %2 second name)
-                 (context/find-in-scopes context (first %2))) {} (api :query-keys)))
-    (not= (api :method) :get)
-    (string/join "&"
-      (map #(str (-> % second name) "=" (context/find-in-scopes context (first %))) (api :query-keys)))))
-
-(defn build-request [request context api]
-  (merge request
-    (when-let [basic-auth (api :basic-auth)]
-      (println basic-auth)
-      {:basic-auth [ (context/find-in-scopes context (first  basic-auth))
-                     (context/find-in-scopes context (second basic-auth))]})
-    {:headers (api/build-request-headers context api)}
-    {:body (build-request-body context api)}))
-
 (defn execute-api [context api]
-  (let [ url (build-url context api)
+  (let [ url (api/build-url context api)
          cache (try (wcar* (car/get (str (api :name) "-" url)))
                  (catch Exception e (log/debug "Skip cache-get" e)))]
     (log/info url)
@@ -103,7 +46,7 @@
       :response (if cache
                   cache 
                   (http/request
-                    (build-request {:url url :method (get api :method :get)} context api)
+                    (api/build-request {:url url :method (get api :method :get)} context api)
                     nil))}))
 
 (defn find-api [apis name]
@@ -126,7 +69,7 @@
         (do
           (log/debug "API response(from cache)" (result :response))
           {:page {(name (api :name)) (json/read-str (result :response))} }) ;; From Cache
-        (let [ response (parse-response @(result :response))
+        (let [ response (api/parse-response @(result :response))
                cache-key (str (api :name) "-" (get-in @(result :response) [:opts :url]))]
           (log/debug "API response" @(result :response))
           (if (apply (api :success?) [@(result :response)])
@@ -193,7 +136,7 @@
   ([context url options]
     (-> (ring.util.response/redirect
           (if options
-            (build-url context
+            (api/build-url context
               { :url url
                 :method :get
                 :query-keys (options :query-keys)})
@@ -217,7 +160,7 @@
     darzana.admin.router/routes
     darzana.admin.api/routes
     darzana.admin.git/routes
-    darzana.workspace/routes
+    darzana.admin.workspace/routes
     (GET "/" [] (response/resource-response "index.html"
                   {:root "darzana/admin/public"}))
     (route/resources "/" {:root "darzana/admin/public"} )))
