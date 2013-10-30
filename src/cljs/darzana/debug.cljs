@@ -11,7 +11,7 @@
                                     (formatJSON (second %)) "</td></tr>") (js->clj json))
                             "</table>"]))
       (or (= x js/Array) (coll? json))
-      (apply str (flatten ["table"
+      (apply str (flatten ["<table>"
                             (map-indexed #(str "<tr><th>" %1 "</th><td>"
                                             (formatJSON %2) "</td></tr>") (js->clj json))
                             "</table>"]))
