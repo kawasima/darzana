@@ -81,8 +81,9 @@
                 { "status"   (-> result :response deref :status)
                   "message" response}}}))))))
 
-(defn call-api [context apis]
-  (let [api-responses (call-api-internal context apis)]
+(defn call-api [context api]
+  (let [ apis (if (map? api) [api] api)
+         api-responses (call-api-internal context apis)]
     (assoc context :scope
       (reduce #(merge-with merge %1 %2) (context :scope) api-responses))))
 
