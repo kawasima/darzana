@@ -30032,7 +30032,7 @@ darzana.view.menu.MenuView = Backbone.View.extend({el:jayq.core.$.call(null, "\x
   this.$(".container-btn").html(c.append(b)).css("width", "40px").animate({width:"50%"}, {duration:1E3, complete:function() {
     return jayq.core.trigger.call(null, b, "focus")
   }});
-  return jayq.core.$.call(null, a.call(null, darzana.view.menu.currentTarget)).tooltip("hide")
+  return jayq.core.$.call(null, a.currentTarget).tooltip("hide")
 }, createWorkspace:function(a) {
   a = new darzana.model.Workspace({name:this.$(".form-workspace-new [name\x3dname]").val()});
   try {
@@ -30054,7 +30054,7 @@ darzana.view.menu.MenuView = Backbone.View.extend({el:jayq.core.$.call(null, "\x
   return cljs.core.truth_(c) ? c.save(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "active", "active", 3885920888), !0], !0)), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
     b.$(".text-workspace").html(a.get("name")).textillate("start");
     return b.workspaceList.fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "reset", "reset", 1122308289), !0], !0)))
-  }], !0))) : jayq.core.$.call(null, a.call(null, darzana.view.menu.currentTarget)).tooltip("hide")
+  }], !0))) : jayq.core.$.call(null, a.currentTarget).tooltip("hide")
 }, changeWorkspace:function(a) {
   a = jayq.core.$.call(null, a.currentTarget).val();
   jayq.core.$.call(null, "a.navbar-brand").attr("href", [cljs.core.str("#"), cljs.core.str(a)].join(""));
@@ -30078,7 +30078,7 @@ darzana.view.menu.MenuView = Backbone.View.extend({el:jayq.core.$.call(null, "\x
   return cljs.core.truth_(c) ? c.destroy(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
     b.$([cljs.core.str("select[name\x3dworkspace] \x3e option[value\x3d"), cljs.core.str(c.get("name")), cljs.core.str("]")].join("")).remove();
     return darzana.global.app.navigate(b.$("select[name\x3dworkspace]").val(), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "trigger", "trigger", 4248979754), !0], !0)))
-  }], !0))) : jayq.core.$.call(null, a.call(null, darzana.view.menu.currentTarget)).tooltip("hide")
+  }], !0))) : jayq.core.$.call(null, a.currentTarget).tooltip("hide")
 }, selectCloneUrl:function(a) {
   return jayq.core.$.call(null, a.currentTarget).select()
 }});

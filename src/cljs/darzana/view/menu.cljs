@@ -68,7 +68,7 @@
                 (js-obj "width" "50%")
                 (js-obj "duration" 1000
                   "complete" (fn [] (jq/trigger input "focus"))))))
-          (.. ($ (event currentTarget)) (tooltip "hide"))))
+          (.. ($ (. event -currentTarget)) (tooltip "hide"))))
 
       "createWorkspace"
       (fn [event]
@@ -101,7 +101,7 @@
                       (html (. model get "name"))
                       (textillate "start"))
                     (.. me -workspaceList (fetch (clj->js {:reset true}))))}))
-            (.. ($ (event currentTarget)) (tooltip "hide")))))
+            (.. ($ (. event -currentTarget)) (tooltip "hide")))))
       
       "changeWorkspace"
       (fn [event]
@@ -146,7 +146,7 @@
                       (-> me (.$ "select[name=workspace]") (.val))
                       (clj->js { :trigger true}))
                     )}))
-            (.. ($ (event currentTarget)) (tooltip "hide")))))
+            (.. ($ (. event -currentTarget)) (tooltip "hide")))))
 
       "selectCloneUrl"
       (fn [event]

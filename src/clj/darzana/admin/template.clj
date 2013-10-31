@@ -38,9 +38,11 @@
                         :is_dir (.isDirectory file)
                         :lastModified (.lastModified file)
                         :size (.length file)}))
-                  (if (= mode "tree")
-                    (.listFiles (io/file (make-path ws) path))
-                    (walk (io/file (make-path ws) path) #".*\.hbs"))))})
+                  (sort-by
+                    #(.getName %)
+                    (if (= mode "tree")
+                      (.listFiles (io/file (make-path ws) path))
+                      (walk (io/file (make-path ws) path) #".*\.hbs")))))})
 
     (PUT "/*" [:as r]
       (let [ request-body (json/read-str (slurp (r :body)))
