@@ -92,6 +92,31 @@
     font-size: 16pt;
 }
 
+.navbar-action {
+    background-image: url(../img/canstockphoto4925697.jpg);
+    background-repeat: repeat-x;
+    background-size: contain;
+}
+
+.panel-default > .panel-heading {
+    background-image: url(../img/canstockphoto4925697.jpg);
+    background-repeat: repeat-x;
+    background-size: contain;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.panel-default > .panel-heading h4 {
+    text-shadow: 1px 1px 15px #990033;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.panel {
+    border-radius: 10px;
+    border-top: none;
+}
+
 #page-menu .clone-url-box input {
     background-color: #fff;
 }
