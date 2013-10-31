@@ -2,7 +2,9 @@
   (:use
     [darzana.global :only (app)]
     [darzana.router :only (Application)]
-    [darzana.i18n :only [t]]))
+    [darzana.i18n :only [t]])
+  (:require
+    [clojure.string :as string]))
 
 ;;;
 ;;; Setting for handebars helpers
@@ -24,11 +26,26 @@
 
 (. js/Handlebars registerHelper "if-eq"
   (fn [a b block]
-    (if (= a b) (. block fn) (. block inverse) )))
+    (this-as me
+      (if (= a b) (. block fn me) (. block inverse me)))))
 
 (. js/Handlebars registerHelper "if-neq"
   (fn [a b block]
-    (if-not (= a b) (. block fn) (. block inverse) )))
+    (this-as me
+      (if-not (= a b) (. block fn me) (. block inverse me)))))
+
+(. js/Handlebars registerHelper "breadcrumb"
+  (fn [workspace path]
+    (new js/Handlebars.SafeString
+      (let [paths (string/split path #"/")]
+        (string/join
+          (flatten
+            [ (for [n (range 1 (count paths))]
+                (apply str
+                  "<li><a href=\"#" workspace "/template/"
+                  (string/join "/" (take n paths))
+                  "\">" (nth paths (dec n)) "</a></li>"))
+              (str "<li class=\"active\">" (last paths) "</li>")]))))))
 
 (. js/Handlebars registerHelper "keywordToName"
   (fn [key]

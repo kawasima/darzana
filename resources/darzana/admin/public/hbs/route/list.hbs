@@ -5,9 +5,9 @@
   <div class="panel-body">
     <p>{{t "messages/lead-router-list"}}</p>
     {{#unless workspace/default}}
-    <a class="icon-stack btn-add">
-      <i class="icon-circle-blank icon-stack-base"></i>
-      <i class="icon-plus"></i>
+    <a class="fa-stack btn-add">
+      <i class="fa fa-circle-o fa-stack-2x"></i>
+      <i class="fa fa-plus fa-stack-1x"></i>
     </a>
     {{/unless}}
   </div>
@@ -16,9 +16,9 @@
       <li class="list-group-item">
         <a href="#{{workspace}}/route/{{../router}}/{{@index}}/edit">{{method}} {{path}}</a>
         {{#unless ../workspace/default}}
-        <a data-route-id="{{@index}}" class="icon-stack btn-delete pull-right">
-          <i class="icon-circle-blank icon-stack-base"></i>
-          <i class="icon-minus"></i>
+        <a data-route-id="{{@index}}" class="fa-stack btn-delete pull-right">
+          <i class="fa fa-circle-o fa-stack-2x"></i>
+          <i class="fa fa-minus fa-stack-1x"></i>
         </a>
         {{/unless}}
       </li>

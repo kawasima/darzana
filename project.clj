@@ -68,6 +68,11 @@
           :optimizations :simple
           :libs ["lib/blockly"]
           :pretty-print true}}
+      :debug
+      { :source-paths ["src/cljs/darzana/debug.js"]
+        :compiler
+        { :output-to "resources/darzana/admin/public/js/debug.js"
+          :optimizations :simple }}
       :test
       { :source-paths ["src/cljs" "test/cljs"]
         :compiler

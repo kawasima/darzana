@@ -29629,39 +29629,51 @@ Blockly.Language.ab_testing_convert = cljs.core.clj__GT_js.call(null, cljs.core.
 darzana.view = {};
 darzana.view.template = {};
 darzana.view.template.TemplateListView = Backbone.View.extend(cljs.core.clj__GT_js.call(null, cljs.core.PersistentHashMap.fromArrays([new cljs.core.Keyword(null, "createTemplate", "createTemplate", 614926600), new cljs.core.Keyword(null, "render", "render", 4374279432), new cljs.core.Keyword(null, "initialize", "initialize", 1884995330), new cljs.core.Keyword(null, "deleteTemplate", "deleteTemplate", 1934347959), new cljs.core.Keyword(null, "copyTemplate", "copyTemplate", 1859817089), new cljs.core.Keyword(null, 
-"openModal", "openModal", 2543465973), new cljs.core.Keyword(null, "renderListItem", "renderListItem", 4799120377), new cljs.core.Keyword(null, "newTemplate", "newTemplate", 949104044), new cljs.core.Keyword(null, "el", "el", 1013907481), new cljs.core.Keyword(null, "events", "events", 4017542283)], [function(a) {
-  a = new darzana.model.Template(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "path", "path", 1017337751), this.$("#form-template-new [name\x3dpath]").val(), new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), this.options.workspace.id], !0)), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "url", "url", 1014020321), [cljs.core.str("template/"), cljs.core.str(this.options.workspace.id)].join("")], 
-  !0)));
+"changeDispMode", "changeDispMode", 1012520359), new cljs.core.Keyword(null, "openModal", "openModal", 2543465973), new cljs.core.Keyword(null, "renderListItem", "renderListItem", 4799120377), new cljs.core.Keyword(null, "newTemplate", "newTemplate", 949104044), new cljs.core.Keyword(null, "toggleFileType", "toggleFileType", 1715100092), new cljs.core.Keyword(null, "el", "el", 1013907481), new cljs.core.Keyword(null, "events", "events", 4017542283)], [function(a) {
+  var b = jayq.core.$.call(null, a.currentTarget);
+  a = new darzana.model.Template(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "name", "name", 1017277949), b.find("[name\x3dpath]").val(), new cljs.core.Keyword(null, "path", "path", 1017337751), clojure.string.join.call(null, "/", cljs.core.PersistentVector.fromArray([this.options.path, b.find("[name\x3dpath]").val()], !0)), new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), this.options.workspace.id, new cljs.core.Keyword(null, 
+  "is_dir", "is_dir", 4129099626), cljs.core._EQ_.call(null, b.find("[name\x3dtype]").val(), "folder")], !0)), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "url", "url", 1014020321), [cljs.core.str("template/"), cljs.core.str(this.options.workspace.id)].join("")], !0)));
   try {
-    this.collection.add(a), a.save(), jayq.core.$.call(null, "#form-template-new").parent().remove()
-  }catch(b) {
-    if(b instanceof Error) {
-      console.log(cljs.core.pr_str.call(null, b))
+    this.collection.add(a), a.save(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
+      return b.parent().remove()
+    }], !0)))
+  }catch(c) {
+    if(c instanceof Error) {
+      console.log(cljs.core.pr_str.call(null, c))
     }else {
       if(new cljs.core.Keyword(null, "else", "else", 1017020587)) {
-        throw b;
+        throw c;
       }
     }
   }
   return!1
 }, function() {
   var a = Handlebars.TemplateLoader.get("template/list");
-  return this.$el.html(a.call(null, cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "templates", "templates", 2995631787), this.collection.toJSON(), new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), this.options.workspace.toJSON()], !0))))
+  return this.$el.html(a.call(null, cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "templates", "templates", 2995631787), this.collection.toJSON(), new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), this.options.workspace.toJSON(), new cljs.core.Keyword(null, "mode", "mode", 1017261333), this.mode, new cljs.core.Keyword(null, "path", "path", 1017337751), this.options.path], !0))))
 }, function() {
-  this.collection = new darzana.model.TemplateList({}, {url:[cljs.core.str("template/"), cljs.core.str(this.options.workspace.id)].join("")});
+  var a = this.options.mode;
+  cljs.core.truth_(a) && (this.mode = a);
+  this.collection = new darzana.model.TemplateList({}, {url:[cljs.core.str("template/"), cljs.core.str(this.options.workspace.id), cljs.core.str("/"), cljs.core.str(this.options.path)].join("")});
   this.collection.on("reset", this.render, this);
   this.collection.on("add", this.render, this);
   this.collection.on("remove", this.render, this);
-  return this.collection.fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "reset", "reset", 1122308289), !0], !0)))
+  return this.collection.fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "reset", "reset", 1122308289), !0, new cljs.core.Keyword(null, "data", "data", 1016980252), cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "mode", "mode", 1017261333), this.mode], !0)], !0)))
 }, function(a) {
   return this.collection.get(jayq.core.$.call(null, a.currentTarget).data("template-id")).destroy()
 }, function(a) {
   var b = this, c = b.$(":input[name\x3ddest_path]").val();
   a = b.$(":input[name\x3dsrc_path]").val();
-  return(new darzana.model.Template(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), a, new cljs.core.Keyword(null, "path", "path", 1017337751), a, new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), b.options.workspace.id], !0)))).fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
+  return(new darzana.model.Template(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), a, new cljs.core.Keyword(null, "path", "path", 1017337751), a, new cljs.core.Keyword(null, "name", "name", 1017277949), cljs.core.last.call(null, clojure.string.split.call(null, a, /\//)), new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), b.options.workspace.id], !0)))).fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, 
+  "success", "success", 3441701749), function(a) {
     b.collection.add(a);
-    return a.save(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "path", "path", 1017337751), c], !0)), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), b.renderListItem], !0)))
+    return a.save(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "path", "path", 1017337751), c, new cljs.core.Keyword(null, "name", "name", 1017277949), cljs.core.last.call(null, clojure.string.split.call(null, c, /\//))], !0)), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), b.renderListItem], !0)))
   }], !0)))
+}, function(a) {
+  a = cljs.core._EQ_.call(null, "tree", this.mode) ? "list" : "tree";
+  window.localStorage.setItem("dispMode", a);
+  this.mode = a;
+  return cljs.core.empty_QMARK_.call(null, this.options.path) ? this.collection.fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "reset", "reset", 1122308289), !0, new cljs.core.Keyword(null, "data", "data", 1016980252), cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "mode", "mode", 1017261333), a], !0)], !0))) : darzana.global.app.navigate([cljs.core.str(this.options.workspace.id), cljs.core.str("/template")].join(""), 
+  cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "trigger", "trigger", 4248979754), !0], !0)))
 }, function(a) {
   a = jayq.core.$.call(null, a.currentTarget).data("template-id");
   this.$(":input[name\x3dsrc_path]").val(a);
@@ -29675,9 +29687,12 @@ darzana.view.template.TemplateListView = Backbone.View.extend(cljs.core.clj__GT_
   a = jayq.core.$.call(null, a.call(null, {}));
   this.$(".list-templates").append(a);
   return jayq.core.$.call(null, window).scrollTop(a.offset().top)
-}, jayq.core.$.call(null, "\x3cdiv id\x3d'page-template-list'/\x3e"), {"submit #form-template-new":"createTemplate", "click .btn-open-modal-copy":"openModal", "click .btn-add":"newTemplate", "click .btn-delete":"deleteTemplate", "click .btn-copy":"copyTemplate"}])));
+}, function(a) {
+  a = jayq.core.$.call(null, a.currentTarget);
+  return cljs.core._EQ_.call(null, a.val(), "file") ? a.val("folder").find("i.fa").removeClass("fa-file-o").addClass("fa-folder-o") : a.val("file").find("i.fa").removeClass("fa-folder-o").addClass("fa-file-o")
+}, jayq.core.$.call(null, "\x3cdiv id\x3d'page-template-list'/\x3e"), {"submit #form-template-new":"createTemplate", "click .btn-open-modal-copy":"openModal", "click .btn-add":"newTemplate", "click .btn-delete":"deleteTemplate", "click .btn-copy":"copyTemplate", "click .btn-disp":"changeDispMode", "click .btn-file-type":"toggleFileType"}])));
 darzana.view.template.TemplateEditView = Backbone.View.extend(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "el", "el", 1013907481), jayq.core.$.call(null, "\x3cdiv id\x3d'page-template-edit'/\x3e"), new cljs.core.Keyword(null, "events", "events", 4017542283), {"click .btn-save":"save", "click .btn-back":"back"}, new cljs.core.Keyword(null, "initialize", "initialize", 1884995330), function() {
-  this.model = new darzana.model.Template(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), this.options.path, new cljs.core.Keyword(null, "path", "path", 1017337751), this.options.path, new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), this.options.workspace.id], !0)));
+  this.model = new darzana.model.Template(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), [cljs.core.str(this.options.path), cljs.core.str(".hbs")].join(""), new cljs.core.Keyword(null, "path", "path", 1017337751), this.options.path, new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), this.options.workspace.id], !0)));
   this.model.on("change", this.render, this);
   return this.model.fetch()
 }, new cljs.core.Keyword(null, "render", "render", 4374279432), function() {
@@ -29699,7 +29714,7 @@ darzana.view.template.TemplateEditView = Backbone.View.extend(cljs.core.clj__GT_
     }, 1500)
   }], !0)))
 }, new cljs.core.Keyword(null, "back", "back", 1016920153), function() {
-  return darzana.global.app.navigate([cljs.core.str(this.options.workspace.id), cljs.core.str("/template")].join(""), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "trigger", "trigger", 4248979754), !0], !0)))
+  return window.history.back()
 }], !0)));
 Blockly.Language.key_assign = cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "helpUrl", "helpUrl", 1819712992), "", new cljs.core.Keyword(null, "init", "init", 1017141378), function() {
   this.setColour(130);
@@ -30041,7 +30056,9 @@ darzana.view.menu.MenuView = Backbone.View.extend({el:jayq.core.$.call(null, "\x
     return b.workspaceList.fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "reset", "reset", 1122308289), !0], !0)))
   }], !0))) : jayq.core.$.call(null, a.call(null, darzana.view.menu.currentTarget)).tooltip("hide")
 }, changeWorkspace:function(a) {
-  return darzana.global.app.navigate(jayq.core.$.call(null, a.currentTarget).val(), cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "trigger", "trigger", 4248979754), !0], !0)))
+  a = jayq.core.$.call(null, a.currentTarget).val();
+  jayq.core.$.call(null, "a.navbar-brand").attr("href", [cljs.core.str("#"), cljs.core.str(a)].join(""));
+  return darzana.global.app.navigate(a, cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "trigger", "trigger", 4248979754), !0], !0)))
 }, mergeWorkspace:function(a) {
   var b = this;
   a = b.workspaceList.findWhere(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "name", "name", 1017277949), b.workspace], !0)));
@@ -30138,12 +30155,12 @@ new cljs.core.Keyword(null, "templateList", "templateList", 4332656554), new clj
   return(new darzana.model.Workspace(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), a], !0)))).fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
     return b.switchView(new darzana.view.api.APIListView({workspace:a}))
   }], !0)))
-}, function(a) {
-  var b = this;
-  return(new darzana.model.Workspace(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), a], !0)))).fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
-    return b.switchView(new darzana.view.template.TemplateListView({workspace:a}))
+}, function(a, b) {
+  var c = this, d = new darzana.model.Workspace(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), a], !0))), e = window.localStorage.getItem("dispMode");
+  return d.fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
+    return c.switchView(new darzana.view.template.TemplateListView(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "workspace", "workspace", 2122768391), a, new cljs.core.Keyword(null, "path", "path", 1017337751), b, new cljs.core.Keyword(null, "mode", "mode", 1017261333), cljs.core.truth_(e) ? e : cljs.core.empty_QMARK_.call(null, b) ? "list" : "tree"], !0))))
   }], !0)))
-}, cljs.core.clj__GT_js.call(null, cljs.core.PersistentHashMap.fromArrays(" :workspace/api :workspace/api/*path/show :workspace/route/:router :workspace/route/:router/:id/edit :workspace/template/*path/edit :workspace/template :workspace/route :workspace".split(" "), "menu apiList apiShow routeIndex routeEdit templateEdit templateList routeIndex menu".split(" "))), function(a, b) {
+}, cljs.core.clj__GT_js.call(null, cljs.core.PersistentHashMap.fromArrays(" :workspace/api :workspace/api/*path/show :workspace/route/:router :workspace/route/:router/:id/edit :workspace/template/*path/edit :workspace/template/*path :workspace/template :workspace/route :workspace".split(" "), "menu apiList apiShow routeIndex routeEdit templateEdit templateList templateList routeIndex menu".split(" "))), function(a, b) {
   var c = this;
   return(new darzana.model.Workspace(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), a], !0)))).fetch(cljs.core.clj__GT_js.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "success", "success", 3441701749), function(a) {
     return c.switchView(new darzana.view.template.TemplateEditView({workspace:a, path:b}))
@@ -30267,10 +30284,46 @@ Handlebars.registerHelper("selected", function(a, b) {
   return cljs.core._EQ_.call(null, a, b) ? "selected\x3d'selected'" : ""
 });
 Handlebars.registerHelper("if-eq", function(a, b, c) {
-  return cljs.core._EQ_.call(null, a, b) ? c.fn() : c.inverse()
+  return cljs.core._EQ_.call(null, a, b) ? c.fn(this) : c.inverse(this)
 });
 Handlebars.registerHelper("if-neq", function(a, b, c) {
-  return cljs.core._EQ_.call(null, a, b) ? c.inverse() : c.fn()
+  return cljs.core._EQ_.call(null, a, b) ? c.inverse(this) : c.fn(this)
+});
+Handlebars.registerHelper("breadcrumb", function(a, b) {
+  return new Handlebars.SafeString(function() {
+    var c = clojure.string.split.call(null, b, /\//);
+    return clojure.string.join.call(null, cljs.core.flatten.call(null, cljs.core.PersistentVector.fromArray([function() {
+      return function e(b) {
+        return new cljs.core.LazySeq(null, function() {
+          for(;;) {
+            var g = cljs.core.seq.call(null, b);
+            if(g) {
+              if(cljs.core.chunked_seq_QMARK_.call(null, g)) {
+                var h = cljs.core.chunk_first.call(null, g), k = cljs.core.count.call(null, h), l = cljs.core.chunk_buffer.call(null, k);
+                a: {
+                  for(var m = 0;;) {
+                    if(m < k) {
+                      var n = cljs.core._nth.call(null, h, m);
+                      cljs.core.chunk_append.call(null, l, cljs.core.apply.call(null, cljs.core.str, '\x3cli\x3e\x3ca href\x3d"#', a, "/template/", clojure.string.join.call(null, "/", cljs.core.take.call(null, n, c)), '"\x3e', cljs.core.nth.call(null, c, n - 1), "\x3c/a\x3e\x3c/li\x3e"));
+                      m += 1
+                    }else {
+                      h = !0;
+                      break a
+                    }
+                  }
+                  h = void 0
+                }
+                return h ? cljs.core.chunk_cons.call(null, cljs.core.chunk.call(null, l), e.call(null, cljs.core.chunk_rest.call(null, g))) : cljs.core.chunk_cons.call(null, cljs.core.chunk.call(null, l), null)
+              }
+              l = cljs.core.first.call(null, g);
+              return cljs.core.cons.call(null, cljs.core.apply.call(null, cljs.core.str, '\x3cli\x3e\x3ca href\x3d"#', a, "/template/", clojure.string.join.call(null, "/", cljs.core.take.call(null, l, c)), '"\x3e', cljs.core.nth.call(null, c, l - 1), "\x3c/a\x3e\x3c/li\x3e"), e.call(null, cljs.core.rest.call(null, g)))
+            }
+            return null
+          }
+        }, null, null)
+      }.call(null, cljs.core.range.call(null, 1, cljs.core.count.call(null, c)))
+    }(), [cljs.core.str('\x3cli class\x3d"active"\x3e'), cljs.core.str(cljs.core.last.call(null, c)), cljs.core.str("\x3c/li\x3e")].join("")], !0)))
+  }())
 });
 Handlebars.registerHelper("keywordToName", function(a) {
   return a.substring(1)

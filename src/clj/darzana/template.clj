@@ -23,8 +23,8 @@
     (apply [this context options]
       (Handlebars$SafeString.
         (str
-          "<link rel=\"stylesheet\" href=\"/css/debug.css\"/>"
-          "<script src=\"/js/debug.js\"></script>"
+          "<link rel=\"stylesheet\" href=\"/admin/css/debug.css\"/>"
+          "<script src=\"/admin/js/debug.js\"></script>"
           "<script>var DATA="
           (json/write-str (.model (.context options))
             :value-fn

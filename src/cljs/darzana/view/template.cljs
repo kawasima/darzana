@@ -3,7 +3,9 @@
     [darzana.global :only (app)]
     [darzana.model :only (Template TemplateList)]
     [darzana.i18n :only [t]]
-    [jayq.core :only ($)]))
+    [jayq.core :only ($)])
+  (:require
+    [clojure.string :as string]))
 
 (def TemplateListView
   (. Backbone.View extend
@@ -13,21 +15,27 @@
                   "submit #form-template-new" "createTemplate"
                   "click .btn-open-modal-copy" "openModal"
                   "click .btn-add"     "newTemplate"
-                  "click .btn-delete" "deleteTemplate"
-                  "click .btn-copy"   "copyTemplate")
+                  "click .btn-delete"  "deleteTemplate"
+                  "click .btn-copy"    "copyTemplate"
+                  "click .btn-disp"    "changeDispMode"
+                  "click .btn-file-type" "toggleFileType")
         :initialize
         (fn []
           (this-as me
+            (if-let [mode (.. me -options -mode)]
+              (set! (. me -mode) mode))
             (set! (. me -collection)
               (TemplateList. (js-obj)
                 (js-obj
                   "url"
-                  (str "template/" (.. me -options -workspace -id)))))
+                  (str "template/"
+                    (.. me -options -workspace -id)
+                    "/" (.. me -options -path)))))
             (.. me -collection (on "reset"  (. me -render) me))
             (.. me -collection (on "add"    (. me -render) me))
             (.. me -collection (on "remove" (. me -render) me))
-            (.. me -collection (fetch (clj->js { :reset true })))
-            ))
+            (.. me -collection (fetch (clj->js { :reset true
+                                                 :data { :mode (. me -mode)}})))))
         
         :render
         (fn []
@@ -36,7 +44,9 @@
               (.. me -$el (html (template-fn
                                   (clj->js
                                     { :templates (.. me -collection toJSON)
-                                      :workspace (.. me -options -workspace toJSON)})))))))
+                                      :workspace (.. me -options -workspace toJSON)
+                                      :mode      (.. me -mode)
+                                      :path      (.. me -options -path)})))))))
 
         :newTemplate
         (fn [event]
@@ -46,19 +56,35 @@
               (.. me ($ ".list-templates") (append $template))
               (.scrollTop ($ js/window) (.. $template offset -top)))))
 
+        :toggleFileType
+        (fn [event]
+          (this-as me
+            (let [btn ($ (. event -currentTarget))]
+              (if (= (. btn val) "file")
+                (.. btn (val "folder")
+                  (find "i.fa") (removeClass "fa-file-o")   (addClass "fa-folder-o"))
+                (.. btn (val "file")
+                  (find "i.fa") (removeClass "fa-folder-o") (addClass "fa-file-o"))))))
+
         :createTemplate
         (fn [event]
           (this-as me
-            (let [ template (Template.
+            (let [ form     ($ (. event -currentTarget))
+                   template (Template.
                               (clj->js
-                                { :path (.. me ($ "#form-template-new [name=path]") val)
-                                  :workspace (.. me -options -workspace -id)})
+                                { :name (.. form (find "[name=path]") val)
+                                  :path (string/join "/"
+                                          [(.. me -options -path) (.. form (find "[name=path]") val)])
+                                  :workspace (.. me -options -workspace -id)
+                                  :is_dir (= (.. form (find "[name=type]") val) "folder")})
                               (clj->js
                                 { :url (str "template/" (.. me -options -workspace -id)) }))]
               (try
                 (.. me -collection (add template))
-                (.  template save)
-                (.. ($ "#form-template-new") parent remove)
+                (.  template save
+                  (clj->js
+                    {:success
+                      (fn [model] (.. form parent remove))}))
                 (catch js/Error e (.log js/console (pr-str e))))))
           false)
 
@@ -75,6 +101,7 @@
             (let [ dest-path (.. me ($ ":input[name=dest_path]") val)
                    src-path  (.. me ($ ":input[name=src_path]")  val)
                    src-template (Template. (clj->js { :id src-path :path src-path
+                                                      :name (last (string/split src-path #"/"))
                                                       :workspace (.. me -options -workspace -id)})) ]
               (. src-template fetch
                 (clj->js
@@ -82,7 +109,7 @@
                     (fn [model]
                       (.. me -collection (add model))
                       (.  model save
-                        (clj->js { :path dest-path})
+                        (clj->js { :path dest-path :name (last (string/split dest-path #"/"))})
                         (clj->js { :success (. me -renderListItem) })))})))))
 
         :renderListItem
@@ -92,6 +119,18 @@
               (.. me ($ "#modal-template-copy") (modal "hide"))
               (.. me ($ ".list-templates")
                 (append ($ (template-fn (. model toJSON))))))))
+
+        :changeDispMode
+        (fn [event]
+          (this-as me
+            (let [mode (if (= "tree" (.. me -mode)) "list" "tree")]
+              (.. js/window -localStorage (setItem "dispMode" mode))
+              (set! (. me -mode) mode)
+              (if (empty? (.. me -options -path))
+                (.. me -collection (fetch (clj->js { :reset true
+                                                     :data {:mode mode}})))
+                (. app navigate (str (.. me -options -workspace -id) "/template")
+                  (clj->js {:trigger true}))))))
 
         :deleteTemplate
         (fn [event]
@@ -114,7 +153,7 @@
             (set! (. me -model)
               (Template.
                 (clj->js
-                  { :id        (.. me -options -path)
+                  { :id        (str (.. me -options -path) ".hbs")
                     :path      (.. me -options -path)
                     :workspace (.. me -options -workspace -id)})))
 
@@ -162,6 +201,4 @@
         :back
         (fn []
           (this-as me
-            (.navigate app
-              (str (.. me -options -workspace -id) "/template")
-              (clj->js {:trigger true}))))})))
+            (.. js/window -history back)))})))

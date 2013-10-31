@@ -9,7 +9,7 @@
           {{t "labels/current-workspace"}}: <span class="text-workspace" data-in-effect="bounce">{{current.name}}</span>
           {{#if-neq current.name default.name}}
             <button type="button" class="btn btn-merge">
-              <i class="icon-code-fork"></i>
+              <i class="fa fa-code-fork"></i>
               Merge workspace
             </button>
           {{/if-neq}}
@@ -36,18 +36,18 @@
       </div>
     </div>
     <div class="pull-right container-btn">
-      <a class="icon-stack btn-active" data-toggle="tooltip" data-title="Activate this workspace!">
-        <i class="icon-circle-blank icon-stack-base"></i>
-        <i class="icon-rocket"></i>
+      <a class="fa-stack btn-active" data-toggle="tooltip" data-title="Activate this workspace!">
+        <i class="fa fa-circle-o fa-stack-2x"></i>
+        <i class="fa fa-rocket fa-stack-1x"></i>
       </a>
-      <a class="icon-stack btn-add" data-toggle="tooltip" title="Add new workspace">
-        <i class="icon-circle-blank icon-stack-base"></i>
-        <i class="icon-plus"></i>
+      <a class="fa-stack btn-add" data-toggle="tooltip" title="Add new workspace">
+        <i class="fa fa-circle-o fa-stack-2x"></i>
+        <i class="fa fa-plus fa-stack-1x"></i>
       </a>
       {{#if-neq current.name default.name}}
-      <a class="icon-stack btn-delete" data-toggle="tooltip" title="Delete this workspace!">
-        <i class="icon-circle-blank icon-stack-base"></i>
-        <i class="icon-minus"></i>
+      <a class="fa-stack btn-delete" data-toggle="tooltip" title="Delete this workspace!">
+        <i class="fa fa-circle-o fa-stack-2x"></i>
+        <i class="fa fa-minus fa-stack-1x"></i>
       </a>
       {{/if-neq}}
     </div>

@@ -4,12 +4,25 @@
   </div>
   <div class="panel-body">
     <p>{{t "messages/lead-template-list"}}</p>
-    {{#unless workspace/default}}
-    <a class="icon-stack btn-add">
-      <i class="icon-circle-blank icon-stack-base"></i>
-      <i class="icon-plus"></i>
-    </a>
-    {{/unless}}
+    <div class="row">
+      <div class="col-md-12">
+        {{#unless workspace/default}}
+        <a class="fa-stack btn-add">
+          <i class="fa fa-circle-o fa-stack-2x"></i>
+          <i class="fa fa-plus fa-stack-1x"></i>
+        </a>
+        {{/unless}}
+        <a class="pull-right btn btn-default btn-disp">
+          <i class="fa fa-list"></i>{{mode}} view
+        </a>
+      </div>
+    </div>
+    {{#if-eq mode "tree"}}
+    <ol class="breadcrumb">
+      <li><a href="#{{workspace.name}}/template">[root]</a></li>
+      {{breadcrumb workspace.name path}}
+    </ol>
+    {{/if-eq}}
   </div>
   <ul class="list-group list-templates">
     {{#each templates}}

@@ -105,9 +105,10 @@
       
       "changeWorkspace"
       (fn [event]
-        (.navigate app
-          (.val ($ (.-currentTarget event)))
-          (clj->js {:trigger true})))
+        (let [ws-name (-> (. event -currentTarget) ($) (.val))]
+          (.. ($ "a.navbar-brand") (attr "href" (str "#" ws-name)))
+          (. app navigate ws-name
+            (clj->js {:trigger true}))))
 
       "mergeWorkspace"
       (fn [event]
