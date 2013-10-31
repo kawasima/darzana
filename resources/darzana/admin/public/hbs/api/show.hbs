@@ -25,10 +25,10 @@
       <td>
         {{#each api.query-keys}}
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-3 col-sm-3 col-xs-3">
               <label for="" class="pull-right">{{keywordToName this.[1]}}</label>
             </div>
-            <div class="col-md-9">
+            <div class="col-md-9 col-sm-9 col-xs-9">
               <input type="text" name="{{keywordToName this.[1]}}" class="form-control" value="{{this.[0]}}"/>
             </div>
           </div>
