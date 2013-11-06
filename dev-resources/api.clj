@@ -46,7 +46,7 @@
 ;; Yahoo
 
 (defapi y-local
-  (url "http://search.olp.yahooapis.jp/openLocalPlatform/v1/localSearch")
+  (url "http://search.olp.yahooapis.jp/OpenLocalPlatform/V1/localSearch")
   (query-keys
     (assign :y-app-id => :appid)
     :query :gc :ac :lat :lon :dist :bbox :sort)

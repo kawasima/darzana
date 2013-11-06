@@ -5,7 +5,9 @@
     [darzana.view.route :only (RouteView RouteEditView)]
     [darzana.view.api :only (APIListView APIShowView)]
     [darzana.model :only (Workspace)]
-    [jayq.core :only ($)]))
+    [jayq.core :only ($)])
+  (:require
+    [clojure.string :as string]))
 
 (def Application
   (. Backbone.Router extend
@@ -19,6 +21,7 @@
             ":workspace/route/:router/:id/edit" "routeEdit"
             ":workspace/template" "templateList"
             ":workspace/template/*path/edit" "templateEdit"
+            ":workspace/template/*path" "templateList"
             ":workspace/api" "apiList"
             ":workspace/api/*path/show" "apiShow"})
 
@@ -67,16 +70,20 @@
                             "id" id))))})))))
 
         :templateList
-        (fn [ws-name]
+        (fn [ws-name path]
           (this-as me
-            (let [workspace (Workspace. (clj->js {:id ws-name}))]
+            (let [ workspace (Workspace. (clj->js {:id ws-name}))
+                   mode (.. js/window -localStorage (getItem "dispMode"))]
               (. workspace fetch
                 (clj->js
                   { :success
                     (fn [workspace]
                       (. me switchView
                         (TemplateListView.
-                          (js-obj "workspace" workspace))))})))))
+                          (clj->js
+                            { :workspace workspace
+                              :path      path
+                              :mode      (if mode mode (if (empty? path) "list" "tree"))}))))})))))
 
         :templateEdit
         (fn [ws-name path]

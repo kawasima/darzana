@@ -7,6 +7,10 @@
     </layout>
   </appender>
 
+  <category name="org.eclipse.jetty">
+    <priority value="info"/>
+  </category>
+
   <root>
     <priority value="debug"/>
     <appender-ref ref="stdout"/>

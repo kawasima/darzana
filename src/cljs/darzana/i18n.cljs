@@ -17,7 +17,10 @@
           :error "error"
           :alternative "alternative"
           :convert "Convert"
-          :current-workspace "Current workspace" }
+          :current-workspace "Current workspace"
+          :saving "Saving..."
+          :saved-successfully "Saved!"
+          :failed "Failed"}
         :buttons
         { :save "Save"
           :back "Back" }
@@ -44,6 +47,9 @@
           :current-workspace "現在のワークスペース"}
         :messages
         { :manage-components "コンポーネントの管理"
+          :lead-api-list "登録済みのAPIの一覧です。詳細を見たり、試しに実行したりすることが可能です。"
+          :lead-router-list "ルーティング定義の一覧です。masterブランチ以外では実際に編集することができます。"
+          :lead-template-list "テンプレートの一覧です。masterブランチ以外では実際に編集することができます。"
           }
         :titles
         { :list-templates "テンプレート一覧"

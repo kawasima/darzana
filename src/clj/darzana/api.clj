@@ -1,8 +1,15 @@
 (ns darzana.api
-  (require
+  (:require
+    [clojure.string :as string]
+    [clojure.data.json :as json]
+    [ring.util.codec :as codec]
     [darzana.context :as context]
     [oauth.client :as oauth]
-    [oauth.signature :as sig]))
+    [oauth.signature :as sig])
+  (:import
+    [net.sf.json.xml XMLSerializer]))
+
+(def ^:dynamic default-response-parser (fn [body] (json/read-str body)))
 
 (def apis (ref []))
 
@@ -50,9 +57,9 @@
 (defn query-keys
   [api & fields]
   (assoc api :query-keys
-    (map #(cond
-            (keyword? %) (assign % %)
-            (vector?  %) %) fields)))
+    (vec (map #(cond
+                 (keyword? %) (assign % %)
+                 (vector?  %) %) fields))))
 
 (defn expire
   [api expire]
@@ -88,6 +95,52 @@
               ~@body)]
      (def ~api e#)))
 
+
+
+(defn replace-url-variable [url context]
+  (string/replace url #":([A-Za-z_]\w*)"
+    #(context/find-in-scopes context (-> % second keyword) "")))
+
+(defn build-query-string [context api]
+  (string/join "&"
+    (map #(str (-> % second name) "=" (context/find-in-scopes context (first %))) (:query-keys api))))
+
+(defn build-url [context api]
+  (let [base-url (replace-url-variable (api :url) context)]
+    (if (= (api :method) :get)
+      (str base-url
+        (if-not (or (.contains base-url "?" ) (empty? (api :query-keys))) "?")
+        (build-query-string context api))
+      base-url)))
+
+(defn strip-content-type [f]
+  (let [parts (string/split (if (nil? f) "" f) #"\s*;\s*")]
+    (when (not (empty? parts))
+      (first parts))))
+
+(defn parse-response [response]
+  (let [ content-type (strip-content-type (-> response :headers :content-type))
+         body (response :body) ]
+    (cond
+      (re-find #"/xml$"  content-type) (.read (XMLSerializer.) body)
+      (re-find #"/json$" content-type) (json/read-str body)
+      (re-find #"/x-www-form-urlencoded" content-type) (codec/form-decode
+                                                         (cond
+                                                           (string? body) body
+                                                           (instance? java.io.InputStream body) (slurp body)))
+      (re-find #"^text/plain$" content-type) body
+      (empty? body) {}
+      :else (default-response-parser body))))
+
+(defn build-request-body [context api]
+  (cond 
+    (re-find #"/json$" (get api :content-type ""))
+    (json/write-str
+      (reduce #(assoc %1 (-> %2 second name)
+                 (context/find-in-scopes context (first %2))) {} (api :query-keys)))
+    (not= (api :method) :get)
+    (string/join "&"
+      (map #(str (-> % second name) "=" (context/find-in-scopes context (first %))) (api :query-keys)))))
 
 (defn build-request-headers [context api]
   (apply merge {}
@@ -132,5 +185,13 @@
                            (merge unsigned-params {:oauth_signature signature}) "")}))
     (when-let [headers (api :headers)]
       (map (fn [_] {(-> _ second name) (context/find-in-scopes context (first _))}) headers))))
+
+(defn build-request [request context api]
+  (merge request
+    (when-let [basic-auth (api :basic-auth)]
+      {:basic-auth [ (context/find-in-scopes context (first  basic-auth))
+                     (context/find-in-scopes context (second basic-auth))]})
+    {:headers (build-request-headers context api)}
+    {:body (build-request-body context api)}))
 
 

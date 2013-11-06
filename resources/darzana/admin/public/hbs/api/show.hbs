@@ -1,4 +1,4 @@
-<div class="navbar navbar-default">
+<div class="navbar navbar-default navbar-action">
   <ul class="nav navbar-nav">
     <li>
       <button class="btn btn-back navbar-btn" type="button">Back</button>
@@ -6,40 +6,63 @@
   </ul>
 </div>
 
-<table class="table">
-  <tr>
-    <td>Name</td>
-    <td>{{api.name}}</td>
-  </tr>
-  <tr>
-    <td>URL</td>
-    <td>{{api.method}} {{api.url}}</td>
-  </tr>
-  <tr>
-    <td>Expires</td>
-    <td>{{api.expires}}</td>
-  </tr>  
-  <tr>
-    <td>Query keys</td>
-    <td>{{api.query-keys}}</td>
-  </tr>
-  {{#if api.basic-auth}}
+<form class="form-api" method="post">
+  <table class="table">
     <tr>
-      <td>Basic auth</td>
-      <td>{{api.basic-auth}}</td>
+      <td>Name</td>
+      <td>{{api.name}}</td>
     </tr>
-  {{/if}}
-  {{#if api.oauth-1-authorization}}
     <tr>
-      <td>Oauth authorization</td>
-      <td>{{api.oauth-1-authorization}}</td>
+      <td>URL</td>
+      <td>{{api.method}} {{api.url}}</td>
     </tr>
-  {{/if}}
-  {{#if api.oauth-token}}
-  <tr>
-    <td>Oauth Token (for Oauth 2.0)</td>
-    <td>{{api.oauth-token}}</td>
-  </tr>
-  {{/if}}
+    <tr>
+      <td>Expires</td>
+      <td>{{api.expires}}</td>
+    </tr>  
+    <tr>
+      <td>Query keys</td>
+      <td>
+        {{#each api.query-keys}}
+          <div class="row">
+            <div class="col-md-3 col-sm-3 col-xs-3">
+              <label for="" class="pull-right">{{keywordToName this.[1]}}</label>
+            </div>
+            <div class="col-md-9 col-sm-9 col-xs-9">
+              <input type="text" name="{{keywordToName this.[1]}}" class="form-control" value="{{this.[0]}}"/>
+            </div>
+          </div>
+        {{/each}}
+      </td>
+    </tr>
+    {{#if api.basic-auth}}
+      <tr>
+        <td>Basic auth</td>
+        <td>{{api.basic-auth}}</td>
+      </tr>
+    {{/if}}
+    {{#if api.oauth-1-authorization}}
+      <tr>
+        <td>Oauth authorization</td>
+        <td>{{api.oauth-1-authorization}}</td>
+      </tr>
+    {{/if}}
+    {{#if api.oauth-token}}
+      <tr>
+        <td>Oauth Token (for Oauth 2.0)</td>
+        <td>{{api.oauth-token}}</td>
+      </tr>
+    {{/if}}
+  </table>
+</form>
 
-</table>
+<div class="navbar navbar-default navbar-action">
+  <ul class="nav navbar-nav">
+    <li>
+      <button class="btn btn-primary btn-execute navbar-btn">Execute</button>
+    </li>
+  </ul>
+</div>
+
+<div class="api-execute-result darzana-debug">
+</div>

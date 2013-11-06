@@ -1,27 +1,28 @@
-(defproject net.unit8/darzana "0.1.0-RC1"
+(defproject net.unit8/darzana "0.1.0-RC2"
   :description "Mashup framework with visual editor, auto versioning."
   :url "http://github.com/kawasima/darzana/"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [ [org.clojure/clojure "1.5.1"]
-                  [org.clojure/tools.nrepl "0.2.2"]
+                  [org.clojure/tools.nrepl "0.2.3"]
                   [com.github.jknack/handlebars "1.1.2"]
 		  [compojure "1.1.5"]
-                  [http-kit "2.1.11"]
-                  [com.taoensso/carmine "2.2.0"] ;;redis
-                  [me.raynes/fs "1.4.4"]
+                  [http-kit "2.1.13"]
+                  [com.taoensso/carmine "2.3.1"] ;;redis
+                  [me.raynes/fs "1.4.5"]
                   [clj-oauth "1.4.1"] ;; for Oauth 1.0a support
-                  [clj-jgit "0.5.0"] ;; git
+                  [clj-jgit "0.6.1"] ;; git
+                  [net.unit8/gring "0.1.0"] ;; git-server
                   [net.sf.json-lib/json-lib "2.4" :classifier "jdk15"] ;; XML -> JSON
                   [xom/xom "1.2.5"]
                   [org.clojure/data.xml "0.0.7"]
-                  [ring.middleware.logger "0.4.0"]
+                  [ring.middleware.logger "0.4.3"]
                   [org.slf4j/slf4j-log4j12 "1.7.5"]
                   [com.taoensso/tower "2.0.0-beta5"]
                   ;; for clojurescript
-                  [com.cemerick/clojurescript.test "0.0.4"]
+                  [com.cemerick/clojurescript.test "0.1.0"]
                   [net.unit8/tower-cljs "0.1.0"]
-                  [org.clojure/clojurescript "0.0-1909"]
+                  [org.clojure/clojurescript "0.0-1934"]
                   [jayq "2.4.0"]]
   :jvm-opts ["-XX:+TieredCompilation" "-XX:TieredStopAtLevel=1" "-Xverify:none"]
   :plugins [ [lein-ring "0.8.2"]
@@ -67,6 +68,11 @@
           :optimizations :simple
           :libs ["lib/blockly"]
           :pretty-print true}}
+      :debug
+      { :source-paths ["src/cljs/darzana/debug.js"]
+        :compiler
+        { :output-to "resources/darzana/admin/public/js/debug.js"
+          :optimizations :simple }}
       :test
       { :source-paths ["src/cljs" "test/cljs"]
         :compiler
@@ -77,5 +83,5 @@
     { "unit" ["runners/phantomjs.js" "target/cljs/testable.js"] }}
   :ring {:handler darzana.core/admin-app}
   :profiles
-  {:dev {:dependencies [[ring-mock "0.1.3"]]}})
+  {:dev {:dependencies [[ring-mock "0.1.5"]]}})
 

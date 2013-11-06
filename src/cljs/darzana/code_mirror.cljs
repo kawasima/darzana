@@ -10,9 +10,13 @@
           (if (.match stream "{{")
             (do
               (loop [ch (.next stream)]
-                (when-not (and (= ch "}") (= (.next stream) "}"))
+                (when-not (or
+                            (nil? ch)
+                            (and (= ch "}") (= (.next stream) "}")))
                   (recur (.next stream))))
-              (.eat stream "}"))
-            (loop [ch (.next stream)]
-              (when-not (or (nil? ch) (.match stream "{{" false))
-                (recur (.next stream))))))))))
+              (.eat stream "}")
+              "mustache")
+            (do
+              (loop [ch (.next stream)]
+                (when-not (or (nil? ch) (.match stream "{{" false))
+                  (recur (.next stream)))))))))))

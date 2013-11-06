@@ -11,6 +11,7 @@ pom.xml
 pom.xml.asc
 *.jar
 *.class
+main.min.js
 .lein-*
 .repl-*
 .nrepl-*

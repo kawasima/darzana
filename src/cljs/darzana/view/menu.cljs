@@ -16,7 +16,8 @@
         "click .btn-add"    "newWorkspace"
         "click .btn-delete" "deleteWorkspace"
         "click .btn-active" "activateWorkspace"
-        "click .btn-merge"  "mergeWorkspace")
+        "click .btn-merge"  "mergeWorkspace"
+        "click .clone-url-box input" "selectCloneUrl")
 
       "initialize"
       (fn []
@@ -33,16 +34,21 @@
       (fn []
         (this-as me
           (let [template-fn (. js/Handlebars.TemplateLoader get "menu")]
-            (.html (.-$el me) (template-fn
-                                (js-obj
-                                  "current" (some #(when (. % -current) %)
-                                              (.. me -workspaceList toJSON))
-                                  "default" (some #(when (aget % "default") %)
-                                              (.. me -workspaceList toJSON))
-                                  "workspace"  (. me -workspace)
-                                  "workspaces" (.. me -workspaceList toJSON))))
-            (.. me -$el (tooltip (clj->js { :selector "[data-toggle=tooltip]"
-                                           :container "body"}))))))
+            (.. me -$el
+              (html
+                (template-fn
+                  (clj->js
+                    { :current (some #(when (. % -current) %)
+                                 (.. me -workspaceList toJSON))
+                      :default (some #(when (aget % "default") %)
+                                  (.. me -workspaceList toJSON))
+                      :workspace  (. me -workspace)
+                      :workspaces (.. me -workspaceList toJSON)
+                      :cloneUrl (str
+                                  (.. js/location -href (replace #"/[^/]*$" ""))
+                                  "/darzana-app.git")}
+                    ))))
+            (.. me -$el (tooltip (clj->js { :selector "[data-toggle=tooltip]" }))))))
 
       "newWorkspace"
       (fn [event]
@@ -61,7 +67,8 @@
               (.animate
                 (js-obj "width" "50%")
                 (js-obj "duration" 1000
-                  "complete" (fn [] (jq/trigger input "focus"))))))))
+                  "complete" (fn [] (jq/trigger input "focus"))))))
+          (.. ($ (. event -currentTarget)) (tooltip "hide"))))
 
       "createWorkspace"
       (fn [event]
@@ -93,13 +100,15 @@
                       ($ ".text-workspace")
                       (html (. model get "name"))
                       (textillate "start"))
-                    (.. me -workspaceList (fetch (clj->js {:reset true}))))})))))
+                    (.. me -workspaceList (fetch (clj->js {:reset true}))))}))
+            (.. ($ (. event -currentTarget)) (tooltip "hide")))))
       
       "changeWorkspace"
       (fn [event]
-        (.navigate app
-          (.val ($ (.-currentTarget event)))
-          (clj->js {:trigger true})))
+        (let [ws-name (-> (. event -currentTarget) ($) (.val))]
+          (.. ($ "a.navbar-brand") (attr "href" (str "#" ws-name)))
+          (. app navigate ws-name
+            (clj->js {:trigger true}))))
 
       "mergeWorkspace"
       (fn [event]
@@ -136,5 +145,11 @@
                     (. app navigate
                       (-> me (.$ "select[name=workspace]") (.val))
                       (clj->js { :trigger true}))
-                    )}))))))))
+                    )}))
+            (.. ($ (. event -currentTarget)) (tooltip "hide")))))
+
+      "selectCloneUrl"
+      (fn [event]
+        (this-as me
+          (.. ($ (. event -currentTarget)) select))))))
 

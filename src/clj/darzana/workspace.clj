@@ -1,12 +1,8 @@
 (ns darzana.workspace
   (:use
-    [clj-jgit.internal]
-    [clj-jgit.porcelain]
-    [clj-jgit.querying]
-    [compojure.core :as compojure :only (GET POST PUT DELETE defroutes)])
+    [clj-jgit internal porcelain querying])
   (:require
     [clojure.java.io :as io]
-    [clojure.data.json :as json]
     [me.raynes.fs :as fs])
   (:import
     [org.eclipse.jgit.api InitCommand]))
@@ -100,53 +96,4 @@
       (.setRemote (.. (io/file (@config :repo)) toURI toString))
       (.add (str "refs/heads/" (@config :default)))
       (.call))))
-
-(defroutes routes
-  (compojure/context "/workspace" []
-    (GET "/" {}
-      (let [ repo (make-repo)
-             branches (map (fn [_]
-                             (let [name (clojure.string/replace (.getName _) #"^refs/heads/" "")]
-                               { :id name
-                                 :name name
-                                 :default (= name (@config :default))
-                                 :current (= name (@config :current))}))
-                        (git-branch-list repo))]
-        { :headers {"Content-Type" "application/json; charset=UTF-8"}
-          :body (json/write-str branches)}))
-
-    (GET "/:name" [name]
-      (let [ repo (make-repo)
-             workspace { :id name
-                         :name name
-                         :current (= name (@config :current))
-                         :default (= name (@config :default))}]
-        { :headers {"Content-Type" "application/json; charset=UTF-8"}
-          :body (json/write-str workspace)}))
-
-    (POST "/" [:as r]
-      (let [ request-body (json/read-str (slurp (r :body)))
-             name (request-body "name")]
-        (make-workspace name)
-        { :headers {"Content-Type" "application/json; charset=UTF-8"}
-          :body (json/write-str (assoc request-body "id" name))}))
-
-    (PUT "/:id" [:as r]
-      (let [ request-body (json/read-str (slurp (r :body)))
-             name (request-body "name")]
-        (change-workspace name)
-        { :headers {"Content-Type" "application/json; charset=UTF-8"}
-          :body (json/write-str request-body)}))
-
-    (PUT "/:id/merge" [:as r]
-      (let [ request-body (json/read-str (slurp (r :body)))
-             name (request-body "name")]
-        (merge-workspace name)
-        { :headers {"Content-Type" "application/json; charset=UTF-8"}
-          :body (json/write-str request-body)}))
-    
-    (DELETE "/:id" [id]
-      (delete-workspace id)
-      { :headers {"Content-Type" "application/json; charset=UTF-8"}
-        :body (json/write-str {:id id :name id})})))
 

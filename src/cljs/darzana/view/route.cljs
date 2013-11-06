@@ -3,13 +3,14 @@
     [darzana.global :only (app)]
     [darzana.model :only (Route RouteList TemplateList APIList)]
     [darzana.block :only (apiDropdown templateDropdown)]
+    [darzana.i18n :only [t]]
     [jayq.core :only ($)])
   (:require
     [Blockly :as Blockly])
   (:use-macros
     [jayq.macros :only [let-ajax let-deferred]]))
 
-(def RouteListView)
+(declare RouteListView)
 
 (def RouteView
   (.extend js/Backbone.View
@@ -189,20 +190,20 @@
         (fn []
           (this-as me
             (let [xml (. Blockly.Xml workspaceToDom Blockly.mainWorkspace)]
-              (.. me ($ ".label-comm-status") (label "info" "Saving..."))
+              (.. me ($ ".label-comm-status") (label "info" (t :labels/saving)))
               (.. me -model
                 (save "xml" (. Blockly.Xml domToText xml)
                   (clj->js
                     { :success
                       (fn [model]
-                        (.. me ($ ".label-comm-status") (label "success" "Saved!"))
+                        (.. me ($ ".label-comm-status") (label "success" (t :labels/saved-successfully)))
                         (js/setTimeout
                           (fn [] (.. me ($ ".label-comm-status") (label "default" "")))
                           1500))
 
                       :error
                       (fn [model]
-                        (.. me ($ ".label-comm-status") (label "error" "Save failed!"))
+                        (.. me ($ ".label-comm-status") (label "error" (t :labels/failed)))
                         (js/setTimeout
                           (fn [] (.. me ($ ".label-comm-status") (label "default" "")))
                           1500))}))))))
