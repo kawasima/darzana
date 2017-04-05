@@ -1,0 +1,59 @@
+{:components
+ {:app         #var darzana.component.handler/handler-component
+  :http        #var ring.component.jetty/jetty-server
+  :api-spec    #var darzana.component.swagger/swagger-component
+  :http-client #var darzana.component.okhttp/okhttp-component
+  :handlebars  #var darzana.component.handlebars/handlebars-component
+  :runtime     #var darzana.component.runtime/runtime-component
+  :jcache      #var darzana.component.jcache/jcache-component
+  :workspace   #var darzana.component.workspace/workspace-component}
+ :endpoints
+ {:example #var darzana.endpoint.example/example-endpoint}
+ :dependencies
+ {:http [:app]
+  :app  [:runtime]
+  :handlebars [:workspace]
+  :runtime [:api-spec :http-client :handlebars]}
+ :config
+ {:app
+  {:middleware
+   {:functions
+    {:hide-errors   #var duct.middleware.errors/wrap-hide-errors
+     :not-found     #var duct.middleware.not-found/wrap-not-found
+     :ring-defaults #var ring.middleware.defaults/wrap-defaults
+     :route-aliases #var duct.middleware.route-aliases/wrap-route-aliases
+     :webjars       #var ring.middleware.webjars/wrap-webjars}
+    :applied
+    [:not-found :webjars :ring-defaults :route-aliases :hide-errors]
+    :arguments
+    {:not-found     #resource "darzana/errors/404.html"
+     :hide-errors   #resource "darzana/errors/500.html"
+     :route-aliases {"/" "/index.html"}
+     :ring-defaults
+     {:params    {:urlencoded true
+                  :keywordize true
+                  :multipart  true
+                  :nested     true}
+      :cookies   true
+      :session   {:flash true
+                  :cookie-attrs {:http-only true}}
+      :security  {:anti-forgery   true
+                  :xss-protection {:enable? true, :mode :block}
+                  :frame-options  :sameorigin
+                  :content-type-options :nosniff}
+      :static    {:resources "darzana/public"}
+      :responses {:not-modified-responses true
+                  :absolute-redirects     true
+                  :content-types          true
+                  :default-charset        "utf-8"}}}}}
+  :http
+  {:port http-port}
+
+  :runtime
+  {:commands [[darzana.command.api :as api]
+              [darzana.command.control :as control]
+              [darzana.command.mapper :as mapper]
+              [darzana.command.renderer :as renderer]]}
+
+  :api-spec
+  {:swagger-path "dev/resources/swagger"}}}

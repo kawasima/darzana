@@ -1,87 +1,59 @@
-(defproject net.unit8/darzana "0.1.0-RC2"
-  :description "Mashup framework with visual editor, auto versioning."
-  :url "http://github.com/kawasima/darzana/"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [ [org.clojure/clojure "1.5.1"]
-                  [org.clojure/tools.nrepl "0.2.3"]
-                  [com.github.jknack/handlebars "1.1.2"]
-		  [compojure "1.1.5"]
-                  [http-kit "2.1.13"]
-                  [com.taoensso/carmine "2.3.1"] ;;redis
-                  [me.raynes/fs "1.4.5"]
-                  [clj-oauth "1.4.1"] ;; for Oauth 1.0a support
-                  [clj-jgit "0.6.1"] ;; git
-                  [net.unit8/gring "0.1.0"] ;; git-server
-                  [net.sf.json-lib/json-lib "2.4" :classifier "jdk15"] ;; XML -> JSON
-                  [xom/xom "1.2.5"]
-                  [org.clojure/data.xml "0.0.7"]
-                  [ring.middleware.logger "0.4.3"]
-                  [org.slf4j/slf4j-log4j12 "1.7.5"]
-                  [com.taoensso/tower "2.0.0-beta5"]
-                  ;; for clojurescript
-                  [com.cemerick/clojurescript.test "0.1.0"]
-                  [net.unit8/tower-cljs "0.1.0"]
-                  [org.clojure/clojurescript "0.0-1934"]
-                  [jayq "2.4.0"]]
-  :jvm-opts ["-XX:+TieredCompilation" "-XX:TieredStopAtLevel=1" "-Xverify:none"]
-  :plugins [ [lein-ring "0.8.2"]
-             [lein-cljsbuild "0.3.3"]]
-  :source-paths ["src/clj"]
-  :test-paths   ["test/clj"]
+(defproject darzana "1.0.0-SNAPSHOT"
+  :description "Build BFF like Scratch"
+  :url "http://github.com/kawasima/darzana"
+  :min-lein-version "2.0.0"
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/core.async "0.3.442"]
+                 [org.clojure/java.data "0.1.1"]
+                 [org.clojure/tools.logging "0.3.1"]
+                 [com.stuartsierra/component "0.3.2"]
+                 [bidi "2.0.16"]
+                 [duct "0.8.2"]
+                 [environ "1.1.0"]
+                 [liberator "0.14.1"]
+                 [ring "1.5.0"]
+                 [ring/ring-defaults "0.2.1"]
+                 [ring-jetty-component "0.3.1"]
+                 [ring-webjars "0.1.1"]
+
+                 [javax.cache/cache-api "1.0.0"]
+                 [clj-jgit "0.8.9"]
+
+                 [io.swagger/swagger-parser "1.0.24"]
+                 [com.github.jknack/handlebars "4.0.6"]
+                 [com.squareup.okhttp3/okhttp "3.6.0"]
+                 [org.slf4j/slf4j-nop "1.7.21"]
+                 [org.webjars/normalize.css "3.0.2"]
+                 [org.webjars/blockly "36eb0787cc5"]]
+  :plugins [[lein-environ "1.0.3"]
+            [lein-cljsbuild "1.1.2"]]
+  :main ^:skip-aot darzana.main
+  :target-path "target/%s/"
   :resource-paths ["resources"]
+  :prep-tasks [["javac"] ["compile"]]
 
-  :cljsbuild
-  {
-    :repl-listen-port 9000
-    :repl-launch-commands
-    { "phantom" [ "phantomjs"
-                  "phantom/repl.js"
-                  :stdout ".repl-phantom-out"
-                  :stderr ".repl-phantom-err"]
-      "phantom-naked" [ "phantomjs"
-                        "runners/repl.js"
-                        "resources/private/html/naked.html"
-                        :stdout ".repl-phantom-out"
-                        :stderr ".repl-phantom-err"]}
-    :builds
-    { :prod
-      { :source-paths ["src/cljs"]
-        :jar true
-        :compiler
-        { :output-to "resources/darzana/admin/public/js/main.min.js"
-          :optimizations :advanced
-          :externs [ "externs/darzana-externs.js"
-                     "externs/jquery-1.9.js"
-                     "externs/codemirror-externs.js"
-                     "externs/handlebars-externs.js"
-                     "externs/underscore-externs.js"
-                     "externs/backbone-1.0.0-externs.js"]
-          :libs ["lib/blockly"]
-          :pretty-print false
-          }}
-      :dev
-      { :source-paths ["src/cljs"]
-        :jar true
-        :compiler
-        { :output-to "resources/darzana/admin/public/js/main.js"
-          :optimizations :simple
-          :libs ["lib/blockly"]
-          :pretty-print true}}
-      :debug
-      { :source-paths ["src/cljs/darzana/debug.js"]
-        :compiler
-        { :output-to "resources/darzana/admin/public/js/debug.js"
-          :optimizations :simple }}
-      :test
-      { :source-paths ["src/cljs" "test/cljs"]
-        :compiler
-        { :output-to "target/cljs/testable.js"
-          :optimizations :simple
-          :pretty-print false}}}
-    :test-commands
-    { "unit" ["runners/phantomjs.js" "target/cljs/testable.js"] }}
-  :ring {:handler darzana.core/admin-app}
+  :aliases {"setup"  ["run" "-m" "duct.util.repl/setup"]}
   :profiles
-  {:dev {:dependencies [[ring-mock "0.1.5"]]}})
-
+  {:dev  [:project/dev  :profiles/dev]
+   :test [:project/test :profiles/test]
+   :repl {:resource-paths ^:replace ["resources" "dev/resources"]
+          :prep-tasks     ^:replace [["javac"] ["compile"]]}
+   :uberjar {:aot :all}
+   :profiles/dev  {}
+   :profiles/test {}
+   :project/dev   {:dependencies [[duct/generate "0.8.2"]
+                                  [reloaded.repl "0.2.3"]
+                                  [org.clojure/tools.namespace "0.2.11"]
+                                  [org.clojure/tools.nrepl "0.2.12"]
+                                  [org.jsr107.ri/cache-ri-impl "1.0.0"]
+                                  [eftest "0.1.1"]
+                                  [com.gearswithingears/shrubbery "0.4.1"]
+                                  [kerodon "0.8.0"]
+                                  [binaryage/devtools "0.8.2"]
+                                  [com.cemerick/piggieback "0.2.1"]]
+                   :source-paths   ["dev/src"]
+                   :java-source-paths ["dev/src"]
+                   :resource-paths ["dev/resources"]
+                   :repl-options {:init-ns user}
+                   :env {:port "3000"}}
+   :project/test  {}})

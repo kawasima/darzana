@@ -1,8 +1,0 @@
-(darzana.core/set-application-scope
-  { :hotpepper-key ""
-    :hatena-consumer-key ""
-    :hatena-consumer-secret ""
-    :hatena-callback "http://127.0.0.1:3000/hatena/authorize"
-    :twitter-consumer-key ""
-    :twitter-consumer-secret "" })
-
