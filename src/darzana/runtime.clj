@@ -1,6 +1,5 @@
-(ns darzana.component.runtime
-  (:require [com.stuartsierra.component :as component]
-            [duct.util.namespace :as ns]
+(ns darzana.runtime
+  (:require [integrant.core :as ig]
             [clojure.java.io :as io]))
 
 (def default-options
@@ -12,7 +11,7 @@
                       :application]
    :routes-path "dev/resources/scripts"})
 
-(defn load-routes [{:keys [commands routes-path]}]
+(defn load-routes [commands routes-path]
   (let [nspace (create-ns (gensym))]
     (binding [*ns* nspace]
       (doseq [cmds commands]
@@ -22,16 +21,6 @@
                                           (.endsWith (.getName %) ".clj"))))]
 
                   (eval (read-string (slurp f))))))))
-
-(defrecord DarzanaRuntime [commands]
-  component/Lifecycle
-
-  (start [component]
-    (let [routes (load-routes component)]
-      (assoc component :routes ["/" routes])))
-
-  (stop [component]
-    (dissoc component :commands)))
 
 (defn keyword-to-str [v]
   (cond
@@ -56,5 +45,9 @@
     :request request
     :runtime runtime}))
 
-(defn runtime-component [options]
-  (map->DarzanaRuntime (merge default-options options)))
+(defrecord DarzanaRuntime [routes handlebars])
+
+(defmethod ig/init-key :darzana/runtime [_ {:keys [routes-path commands handlebars]}]
+  (let [routes (load-routes commands routes-path)]
+    (map->DarzanaRuntime {:routes ["/" routes]
+                          :handlebars handlebars})))

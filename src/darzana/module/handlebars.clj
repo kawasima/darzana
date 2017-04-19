@@ -1,9 +1,9 @@
-(ns darzana.component.handlebars
-  (:require [com.stuartsierra.component :as component]
+(ns darzana.module.handlebars
+  (:require [integrant.core :as ig]
             [clojure.java.io :as io]
             [clojure.data.json :as json]
             [darzana.context :as context]
-            [darzana.component.workspace :as workspace])
+            [darzana.module.workspace :as workspace])
   (:import [com.github.jknack.handlebars Handlebars Handlebars$SafeString Handlebars$Utils Helper]
            [com.github.jknack.handlebars.io FileTemplateLoader]))
 
@@ -34,16 +34,7 @@
          ";document.write('<div class=\"darzana-debug\">' + Debug.formatJSON(DATA) + '</div>');"
          "Debug.collapsible($('.darzana-debug'), 'Debug Information');</script>"))))))
 
-(defrecord HandlebarsComponent [workspace]
-  component/Lifecycle
-
-  (start [component]
-    (let [engine (Handlebars. (FileTemplateLoader. (:template-path component)))]
-      (register-helper engine)
-      (assoc component :engine engine)))
-
-  (stop [component]
-    (dissoc component :engine)))
+(defrecord HandlebarsComponent [engine])
 
 (defn render-html [{:keys [engine]} ctx template-name]
   (let [template (.compile engine template-name)]
@@ -52,5 +43,7 @@
 (def default-options
   {:template-path "dev/resources/hbs"})
 
-(defn handlebars-component [options]
-  (map->HandlebarsComponent (merge default-options options)))
+(defmethod ig/init-key :darzana.template/handlebars [_ {:keys [template-path]}]
+  (let [engine (Handlebars. (FileTemplateLoader. template-path))]
+    (register-helper engine)
+    (map->HandlebarsComponent {:engine engine})))

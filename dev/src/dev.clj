@@ -4,18 +4,22 @@
             [clojure.pprint :refer [pprint]]
             [clojure.tools.namespace.repl :refer [refresh]]
             [clojure.java.io :as io]
-            [com.stuartsierra.component :as component]
-            [duct.generate :as gen]
-            [duct.util.repl :refer [setup test cljs-repl migrate rollback]]
-            [duct.util.system :refer [load-system]]
-            [reloaded.repl :refer [system init start stop go reset]]))
+            [duct.core :as duct]
+            [eftest.runner :as eftest]
+            [integrant.core :as ig]
+            [integrant.repl :refer [clear halt go init prep reset]]
+            [integrant.repl.state :refer [config system]]))
 
-(defn new-system []
-  (load-system (keep io/resource ["darzana/system.edn" "dev.edn" "local.edn"])))
+(defn read-config []
+  (duct/read-config
+   (io/resource "darzana/config.edn")
+   (io/resource "dev.edn")
+   (io/resource "local.edn")))
+
+(defn test []
+  (eftest/run-tests (eftest/find-tests "test")))
 
 (when (io/resource "local.clj")
   (load "local"))
 
-(gen/set-ns-prefix 'darzana)
-
-(reloaded.repl/set-init! new-system)
+(integrant.repl/set-prep! (comp duct/prep read-config))

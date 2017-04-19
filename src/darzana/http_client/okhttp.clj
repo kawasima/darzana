@@ -1,14 +1,16 @@
-(ns darzana.component.okhttp
-  (:require [com.stuartsierra.component :as component]
+(ns darzana.http-client.okhttp
+  (:require [integrant.core :as ig]
             [clojure.string :as string]
             [clojure.data.json :as json]
             [ring.util.codec :as codec]
-            [darzana.component.http-client :as http-client])
+            [darzana.http-client :as http-client])
   (:import [okhttp3 OkHttpClient
             Callback
             MediaType
             Request$Builder
             RequestBody]))
+
+(derive :darzana.http-client/okhttp :darzana/http-client)
 
 (defonce default-response-parser (fn [body] (.string body)))
 
@@ -35,19 +37,7 @@
   builder)
 
 
-
-(defrecord OkHttp []
-  component/Lifecycle
-
-  (start [component]
-    (let [client (-> (OkHttpClient.)
-                     (.newBuilder)
-                     (.build))]
-      (assoc component :client client)))
-
-  (stop [component]
-    (dissoc component :client))
-
+(defrecord OkHttp [client]
   http-client/HttpClient
   (request [{:keys [client]} r on-success on-failure]
     (let [req (-> (Request$Builder.)
@@ -78,5 +68,8 @@
         (re-find #"^text/plain$" content-type) body
         :else (default-response-parser body)))))
 
-(defn okhttp-component [options]
-  (map->OkHttp options))
+(defmethod ig/init-key :darzana.http-client/okhttp [_ spec]
+  (let [client (-> (OkHttpClient.)
+                     (.newBuilder)
+                     (.build))]
+    (map->OkHttp {:client client})))

@@ -6,6 +6,13 @@ Darzana is a DSL for backends-for-frontends (BFF).
 - Define APIs from Swagger specifications
 - Render a HTML template
 
+## Examples
+
+```clj
+(control/defroute "/pet" :get
+  (mapper/assign {:var :pet} io.swagger.model.Pet))
+```
+
 ## Commands specification
 
 ### defroute
@@ -23,6 +30,22 @@ Call multiple APIs in parallel.
 ```clj
 (call-api [{:id :petstore :path "/pet/{petId}" :method :get}
            {:id :petstore :path "/user/{userId}" :method :get}])
+```
+
+### mapper
+
+`mapper` is a command that converts to an another darzana scope variable.
+
+```clj
+(assign {:scope :params} {:scope :page, :var :pet, :type io.swagger.model.Pet})
+```
+
+If `type` parameter exists, validate automatically.
+
+Add an authenticated user to session.
+
+```clj
+(assign {:var :login-user} {:scope :session})
 ```
 
 ### render

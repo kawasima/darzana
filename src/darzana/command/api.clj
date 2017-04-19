@@ -2,9 +2,9 @@
   (:require [clojure.data.json :as json]
             [clojure.core.async :as async]
             [darzana.context :as context]
-            [darzana.component.api-spec :as api-spec]
-            [darzana.component.http-client :as http-client]
-            [darzana.component.jcache :as jcache]
+            [darzana.api-spec :as api-spec]
+            [darzana.http-client :as http-client]
+            [darzana.module.jcache :as jcache]
             [clojure.tools.logging :as log]))
 
 (defn execute-api [{{:keys [http-client api-spec]} :runtime :as context} ch api]

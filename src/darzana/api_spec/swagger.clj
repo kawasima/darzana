@@ -1,13 +1,15 @@
-(ns darzana.component.swagger
-  (:require [com.stuartsierra.component :as component]
+(ns darzana.api-spec.swagger
+  (:require [integrant.core :as ig]
             [clojure.string :as string]
             [clojure.data.json :as json]
-            [darzana.component.api-spec :as api-spec]
+            [darzana.api-spec :as api-spec]
             [darzana.context :as context]
             [clojure.java.io :as io])
   (:import [java.io File FileFilter]
            [io.swagger.parser SwaggerParser]
            [io.swagger.models Swagger HttpMethod]))
+
+(derive :darzana.api-spec/swagger :darzana/api-spec)
 
 (defn replace-url-variables [url context]
   (string/replace url #"\{([A-Za-z_]\w*)\}"
@@ -62,25 +64,7 @@
     (when-let [content-type (first (.getConsumes operation))]
       {"Content-Type" content-type})))
 
-(defrecord SwaggerModel [swagger-path]
-  component/Lifecycle
-
-  (start [component]
-    (let [parser (SwaggerParser.)
-          apis (->> (io/file swagger-path)
-                    (file-seq)
-                    (filter #(and (.endsWith (.getName %) ".json")
-                                  (.isFile %)))
-                    (map (fn [f]
-                           [(string/replace (.getName f) #"\.json$" "")
-                            (.read parser (.getAbsolutePath f))]))
-                    (into {}))]
-      (assoc component
-             :apis apis)))
-
-  (stop [component]
-    (dissoc component :apis))
-
+(defrecord SwaggerModel [apis]
   api-spec/ApiSpec
   (build-request [{:keys [apis]} {:keys [id path method]} context]
     (let [operation (get-operation apis id path method)]
@@ -89,5 +73,14 @@
               :headers (build-request-headers operation method context)
               :body (build-request-body (get apis id) operation context)}))))
 
-(defn swagger-component [options]
-  (map->SwaggerModel options))
+(defmethod ig/init-key :darzana.api-spec/swagger [_ {:keys [swagger-path]}]
+  (let [parser (SwaggerParser.)
+        apis (->> (io/file swagger-path)
+                  (file-seq)
+                  (filter #(and (.endsWith (.getName %) ".json")
+                                (.isFile %)))
+                  (map (fn [f]
+                         [(string/replace (.getName f) #"\.json$" "")
+                          (.read parser (.getAbsolutePath f))]))
+                  (into {}))]
+    (map->SwaggerModel apis)))

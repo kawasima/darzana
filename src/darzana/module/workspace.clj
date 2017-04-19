@@ -1,5 +1,5 @@
-(ns darzana.component.workspace
-  (:require [com.stuartsierra.component :as component]
+(ns darzana.module.workspace
+  (:require [integrant.core :as ig]
             (clj-jgit [internal  :refer :all]
                       [porcelain :refer :all]
                       [querying  :refer :all])
@@ -59,16 +59,10 @@
 (defn current-dir [component]
   (io/file (:workspace component) (:current-branch component)))
 
-(defrecord Workspace []
-  component/Lifecycle
+(defrecord Workspace [repo workspace default-branch initial-resources
+                      current-branch hook])
 
-  (start [component]
-    component)
-
-  (stop [component]
-    component))
-
-(defn workspace-component [options]
+(defmethod ig/init-key :darzana/workspace [_ options]
   (map->Workspace {:repo "repo"
                    :workspace "workspace"
                    :default-branch "master"

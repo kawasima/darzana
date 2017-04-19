@@ -1,5 +1,5 @@
 (ns darzana.command.control
-  (:require [darzana.component.runtime :as runtime]
+  (:require [darzana.runtime :as runtime]
             [darzana.context :as context]))
 
 (defmacro defroute [url method & exprs]

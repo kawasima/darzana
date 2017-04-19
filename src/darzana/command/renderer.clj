@@ -1,5 +1,5 @@
 (ns darzana.command.renderer
-  (:require [darzana.component.handlebars :as handlebars]))
+  (:require [darzana.module.handlebars :as handlebars]))
 
 (defn render [context {:keys [template]}]
   (let [handlebars (get-in context [:runtime :handlebars])]
