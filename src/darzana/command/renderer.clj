@@ -1,8 +1,8 @@
 (ns darzana.command.renderer
-  (:require [darzana.module.handlebars :as handlebars]))
+  (:require [darzana.template :as template]))
 
 (defn render [context {:keys [template]}]
-  (let [handlebars (get-in context [:runtime :handlebars])]
+  (let [template-engine (get-in context [:runtime :template])]
     {:status 200
      :headers {"Content-Type" "text/html"}
-     :body (handlebars/render-html handlebars context template)}))
+     :body (template/render-html template-engine context template)}))

@@ -14,6 +14,7 @@
 (defn load-routes [commands routes-path]
   (let [nspace (create-ns (gensym))]
     (binding [*ns* nspace]
+      (refer 'clojure.core)
       (doseq [cmds commands]
         (eval `(require '~cmds)))
       (into {} (for [f (->> (file-seq (io/file routes-path))
@@ -45,9 +46,17 @@
     :request request
     :runtime runtime}))
 
-(defrecord DarzanaRuntime [routes handlebars])
+(defrecord DarzanaRuntime [routes validator template api-spec http-client scope-priorities])
 
-(defmethod ig/init-key :darzana/runtime [_ {:keys [routes-path commands handlebars]}]
+(defmethod ig/init-key :darzana/runtime [_ {:keys [routes-path commands
+                                                   validator
+                                                   template
+                                                   api-spec
+                                                   http-client]}]
   (let [routes (load-routes commands routes-path)]
-    (map->DarzanaRuntime {:routes ["/" routes]
-                          :handlebars handlebars})))
+    (map->DarzanaRuntime (merge default-options
+                                {:routes ["/" routes]
+                                 :template template
+                                 :api-spec api-spec
+                                 :validator validator
+                                 :http-client http-client}))))

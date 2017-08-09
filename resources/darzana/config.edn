@@ -1,17 +1,19 @@
 {:duct.core/project-ns  darzana
  :duct.core/environment :production
 
- :duct.core/modules
- [#ref :duct.module/logging
-  #ref :darzana.module/handler]
-
  :duct.module/logging {}
 
- :darzana.module/handler {:runtime #ref :darzana/runtime}
+ :darzana.module/handler {:runtime #ig/ref :darzana/runtime}
  :darzana.template/handlebars {:template-path "dev/resources/hbs"}
+ :darzana.api-spec/swagger {}
+ :darzana.validator/hibernate-validator {}
+ :darzana.http-client/okhttp {}
 
  :darzana/runtime {:commands [[darzana.command.api :as api]
                               [darzana.command.control :as control]
                               [darzana.command.mapper :as mapper]
                               [darzana.command.renderer :as renderer]]
-                   :handlebars #ref :darzana.template/handlebars}}
+                   :api-spec #ig/ref :darzana/api-spec
+                   :template #ig/ref :darzana/template
+                   :validator #ig/ref :darzana/validator
+                   :http-client #ig/ref :darzana/http-client}}

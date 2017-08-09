@@ -2,7 +2,8 @@
   (:require [integrant.core :as ig]))
 
 (defprotocol ApiSpec
-  (build-request [component api context]))
+  (build-request [this api context])
+  (spec-id [this api]))
 
 (defmethod ig/init-key :darzana/api-spec [_ spec]
   )

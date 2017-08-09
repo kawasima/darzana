@@ -1,2 +1,6 @@
 {:duct.core/environment :development
+
+ :duct.core/include ["darzana/config"]
+ :darzana.api-spec/swagger {:swagger-path "dev/resources/swagger"}
+ :darzana.http-client/okhttp {}
  :darzana/runtime {:routes-path "dev/resources/scripts"}}

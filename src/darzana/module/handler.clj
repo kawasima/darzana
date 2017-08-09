@@ -10,6 +10,8 @@
             [integrant.core :as ig]
             [ring.middleware.defaults :as defaults]))
 
+(derive :duct.server.http/jetty :duct.server/http)
+
 (def ^:private server-port
   (env/env '["PORT" Int :or 3000]))
 
@@ -47,7 +49,11 @@
    ::mw/not-found    {:response (merge/displace "Resource Not Found")}
    ::mw/hide-errors  {:response (merge/displace "Internal Server Error")}
    ::mw/stacktrace   {}
-   ::mw/defaults     (merge/displace defaults/api-defaults)})
+   ::mw/defaults     (merge/displace (-> defaults/api-defaults
+                                         (assoc-in [:static :resources] "public")
+                                         (assoc-in [:params :nested] true)))})
+
+(derive :darzana.module/handler :duct/module)
 
 (defmethod ig/init-key ::handler [_ {:keys [endpoints middleware runtime]}]
   ((apply comp (reverse middleware))
@@ -56,9 +62,10 @@
                    (partial h runtime)))))
 
 (defmethod ig/init-key :darzana.module/handler [_ options]
-  (fn [config]
-    (core/merge-configs config
-                        (server-config config)
-                        api-config
-                        logging-config
-                        (error-configs (get-environment config options)))))
+  {:req #{:duct/logger}
+   :fn (fn [config]
+         (core/merge-configs config
+                             (server-config config)
+                             api-config
+                             logging-config
+                             (error-configs (get-environment config options))))})

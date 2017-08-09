@@ -12,7 +12,7 @@
    http-client
    (api-spec/build-request api-spec api context)
    (fn [res]
-     (async/put! ch {:page {(:id api)
+     (async/put! ch {:page {(or (:var api) (api-spec/spec-id api-spec api))
                             (http-client/parse-response http-client res)}}))
    (fn [ex]
      (async/put! ch {:error

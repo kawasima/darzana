@@ -1,21 +1,23 @@
 (ns darzana.context)
 
-(defn merge-scope [context]
-  (apply merge (vals (context :scope))))
+(defn merge-scope [{:keys [scope] {:keys [scope-priorities]} :runtime}]
+  (let [merged (->> (reverse scope-priorities)
+                    (remove #(= % :error))
+                    (map #(get scope %))
+                    (reduce #(merge %1 %2) {}))]
+    (assoc merged :error (:error scope))))
 
-(defn- find-in-scopes-inner [{{{:keys [scope-priorities]} :runtime} :components scope :scope}
-                             key]
-  (cond
-    (string? key) key
-    (number? key) (str key)
-    :else
-    (let [keys (if (coll? key)
-                 (map name key)
-                 (name key))]
-      (first
-        (filter #(not (nil? %))
-                (for [scope-name scope-priorities]
-                  (get-in scope (flatten [scope-name keys]))))))))
+(defn- find-in-scopes-inner [{{:keys [scope-priorities]} :runtime scope :scope}
+                             k]
+  (let [ks (if (coll? k)
+             (map name k)
+             [(name k)])]
+    (->> (for [scope-name scope-priorities]
+           (let [ks-with-scope (into [scope-name] ks)]
+             (when (get-in scope ks-with-scope)
+               ks-with-scope)))
+         (filter #(not (nil? %)))
+         first)))
 
 (defn find-in-scopes
   ([context key]

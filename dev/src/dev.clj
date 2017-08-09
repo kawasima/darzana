@@ -7,17 +7,17 @@
             [duct.core :as duct]
             [eftest.runner :as eftest]
             [integrant.core :as ig]
-            [integrant.repl :refer [clear halt go init prep reset]]
+            [integrant.repl :refer [clear halt go init prep reset reset-all]]
             [integrant.repl.state :refer [config system]]))
 
 (defn read-config []
   (duct/read-config
-   (io/resource "darzana/config.edn")
-   (io/resource "dev.edn")
-   (io/resource "local.edn")))
+   (io/resource "dev.edn")))
 
 (defn test []
   (eftest/run-tests (eftest/find-tests "test")))
+
+(clojure.tools.namespace.repl/set-refresh-dirs "dev/src" "src" "test")
 
 (when (io/resource "local.clj")
   (load "local"))

@@ -1,0 +1,18 @@
+{{#partial "content"}}
+<form action="/pet/create" method="POST">
+  <fieldset>
+    <label for="name">Name</label>
+    <input id="name" name="pet[name]" type="text" class="form-control"/>
+
+    <label for="category">Category</label>
+    <select id="category" name="pet[category]" class="form-control">
+    {{#each categories}}
+      <option value="{{id}}">{{name}}</option>
+    {{/each}}
+    </select>
+    <button type="submit" class="btn btn-primary">Save</button>
+
+  </fieldset>
+</form>
+{{/partial}}
+{{> petstore/layout}}

@@ -14,6 +14,6 @@
                                               ['darzana.command.renderer :as 'renderer]]}}
         system  (ig/init config)
         runtime (:darzana/runtime system)
-        ctx (runtime/create-context runtime {:params {:petId "1"}})
+        ctx (runtime/create-context runtime {:params {:id "1" :name "I'm cat"}})
         api {:id "petstore" :path "/pet" :method :post}]
-    (sut/read-value ctx {:scope :params :var :pet} io.swagger.model.Pet)))
+    (println (sut/read-value ctx {:scope :params} {:var :pet :type io.swagger.model.Pet}))))
