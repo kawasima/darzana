@@ -2,7 +2,7 @@
   (:require [integrant.core :as ig]
             [clojure.java.io :as io]
             [clojure.java.data :refer [to-java]]
-            [clojure.data.json :as json]
+            [cheshire.core :as json]
             [clojure.walk :refer [stringify-keys]]
             [darzana.context :as context]
             [darzana.template :as template])
@@ -21,11 +21,11 @@
          "<link rel=\"stylesheet\" href=\"/admin/css/debug.css\"/>"
          "<script src=\"/admin/js/debug.js\"></script>"
          "<scriptvar DATA="
-         (json/write-str (.model (.context options))
-                         :value-fn
-                         (fn [k v]
-                           (cond false nil
-                                 :else v)))
+         (json/generate-string (.model (.context options))
+                               :value-fn
+                               (fn [k v]
+                                 (cond false nil
+                                       :else v)))
          ";document.write('<div class=\"darzana-debug\">' + Debug.formatJSON(DATA) + '</div>');"
          "Debug.collapsible($('.darzana-debug'), 'Debug Information');</script>"))))))
 

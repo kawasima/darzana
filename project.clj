@@ -6,7 +6,7 @@
                  [org.clojure/spec.alpha "0.1.123"]
                  [org.clojure/core.async "0.3.443"]
                  [org.clojure/java.data "0.1.1"]
-                 [org.clojure/data.json "0.2.6"]
+                 [cheshire "5.7.1"] ;; json
                  [bidi "2.1.2"]
                  [duct/core "0.5.2"]
                  [duct/module.logging "0.2.0"]
@@ -23,11 +23,8 @@
                  [com.squareup.okhttp3/okhttp "3.8.1"]
                  [org.hibernate.validator/hibernate-validator "6.0.1.Final"]
                  [org.glassfish/javax.el "3.0.1-b08"]
-                 [org.slf4j/slf4j-nop "1.7.25"]
-                 [org.webjars/normalize.css "5.0.0"]
-                 [org.webjars/blockly "36eb0787cc5"]]
-  :plugins [[lein-environ "1.0.3"]
-            [lein-cljsbuild "1.1.2"]]
+                 [org.slf4j/slf4j-nop "1.7.25"]]
+  :plugins [[lein-environ "1.0.3"]]
   :main ^:skip-aot darzana.main
   :target-path "target/%s/"
   :resource-paths ["resources"]

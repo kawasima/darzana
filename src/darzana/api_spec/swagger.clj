@@ -1,7 +1,7 @@
 (ns darzana.api-spec.swagger
   (:require [integrant.core :as ig]
             [clojure.string :as string]
-            [clojure.data.json :as json]
+            [cheshire.core :as json]
             [darzana.api-spec :as api-spec]
             [darzana.context :as context]
             [clojure.java.io :as io])
@@ -71,7 +71,7 @@
                          "") ]
     (cond
       (re-find #"/json$" content-type)
-      (json/write-str (first models))
+      (json/generate-string (first models))
       :default nil)))
 
 (defn build-request-headers [operation method context]

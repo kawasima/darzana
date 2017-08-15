@@ -5,7 +5,7 @@
     <input id="name" name="pet[name]" type="text" class="form-control"/>
 
     <label for="category">Category</label>
-    <select id="category" name="pet[category]" class="form-control">
+    <select id="category" name="pet[category][id]" class="form-control">
     {{#each categories}}
       <option value="{{id}}">{{name}}</option>
     {{/each}}

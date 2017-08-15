@@ -1,23 +1,28 @@
 (ns darzana.command.api
-  (:require [clojure.data.json :as json]
-            [clojure.core.async :as async]
+  "The commands for calling APIs."
+  (:require [clojure.core.async :as async]
             [darzana.context :as context]
             [darzana.api-spec :as api-spec]
             [darzana.http-client :as http-client]
             [darzana.module.jcache :as jcache]
             [clojure.tools.logging :as log]))
 
-(defn execute-api [{{:keys [http-client api-spec]} :runtime :as context} ch api]
+(defn- execute-api [{{:keys [http-client api-spec]} :runtime :as context} ch api]
   (http-client/request
    http-client
    (api-spec/build-request api-spec api context)
-   (fn [res]
-     (async/put! ch {:page {(or (:var api) (api-spec/spec-id api-spec api))
-                            (http-client/parse-response http-client res)}}))
+   (fn [raw-res]
+     (let [res (http-client/parse-response http-client raw-res)]
+       (if (< (:status res) 300)
+         (async/put! ch {:page {(or (:var api) (api-spec/spec-id api-spec api))
+                                (:body res)}})
+         (async/put! ch {:error
+                         {(:id api) {:status (:status res)
+                                     :message (:body res)}}}))))
    (fn [ex]
      (async/put! ch {:error
                      {(:id api)
-                      {"message" (.getMessage ex)}}}))))
+                      {:message (.getMessage ex)}}}))))
 
 (defn- call-api-internal [context apis]
   (let [ch (async/chan)
@@ -35,6 +40,8 @@
                                {"message" e}}}))))
     @result))
 
-(defn call-api [context api]
+(defn call-api
+  "Call the giving APIs."
+  [context api]
   (let [apis (if (map? api) [api] api)]
     (update-in context [:scope] merge (call-api-internal context apis))))
