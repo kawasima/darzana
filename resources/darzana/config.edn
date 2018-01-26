@@ -2,9 +2,8 @@
  :duct.core/environment :production
 
  :duct.module/logging {}
-
  :darzana.module/handler {:runtime #ig/ref :darzana/runtime}
- :darzana.template/handlebars {:template-path "dev/resources/hbs"}
+ :darzana.template/handlebars {}
  :darzana.api-spec/swagger {}
  :darzana.validator/hibernate-validator {}
  :darzana.http-client/okhttp {}

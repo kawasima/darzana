@@ -1,0 +1,6 @@
+{:darzana.module/handler      [:duct/module]
+ :darzana.api-spec/swagger    [:darzana/api-spec]
+ :darzana.http-client/okhttp  [:darzana/http-client]
+ :darzana.template/handlebars [:darzana/template]
+ :darzana.template/freemarker [:darzana/template]
+ :darzana.validator/hibernate-validator [:darzana/validator]}

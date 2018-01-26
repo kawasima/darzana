@@ -10,8 +10,6 @@
             Request$Builder
             RequestBody]))
 
-(derive :darzana.http-client/okhttp :darzana/http-client)
-
 (defonce default-response-parser (fn [body] (.string body)))
 
 (defn strip-content-type [f]

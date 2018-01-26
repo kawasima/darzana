@@ -6,10 +6,8 @@
             [darzana.context :as context]
             [clojure.java.io :as io])
   (:import [java.io File FileFilter]
-           [io.swagger.parser SwaggerParser]
-           [io.swagger.models Swagger HttpMethod]))
-
-(derive :darzana.api-spec/swagger :darzana/api-spec)
+           [io.swagger.parser OpenAPIParser]
+           [io.swagger.v3.oas.models PathItem$HttpMethod]))
 
 (defn replace-url-variables [url context]
   (string/replace url #"\{([A-Za-z_]\w*)\}"
@@ -18,9 +16,10 @@
 
 (defn get-operation [swagger api-name path method]
   (some-> (get swagger api-name)
-          (.getPath path)
-          (.getOperationMap)
-          (.get (HttpMethod/valueOf (string/upper-case (name method))))))
+          (.getPaths)
+          (.get path)
+          (.readOperationsMap)
+          (.get (PathItem$HttpMethod/valueOf (string/upper-case (name method))))))
 
 (defn build-query-string [operation context]
   (let [params (->> (.getParameters operation)
@@ -94,7 +93,7 @@
       (.getOperationId operation))))
 
 (defmethod ig/init-key :darzana.api-spec/swagger [_ {:keys [swagger-path]}]
-  (let [parser (SwaggerParser.)
+  (let [parser (OpenAPIParser.)
         apis (->> (io/file swagger-path)
                   (file-seq)
                   (filter #(and (.endsWith (.getName %) ".json")

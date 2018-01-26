@@ -3,8 +3,6 @@
             [darzana.validator :as v])
   (:import [javax.validation Validation]))
 
-(derive :darzana.validator/hibernate-validator :darzana/validator)
-
 (defrecord HibernateValidator [validator]
   v/Validator
   (validate [{:keys [validator]} bean-obj]

@@ -9,8 +9,6 @@
   (:import [com.github.jknack.handlebars Handlebars Handlebars$SafeString Handlebars$Utils Helper]
            [com.github.jknack.handlebars.io FileTemplateLoader]))
 
-(derive :darzana.template/handlebars :darzana/template)
-
 (defn- register-helper [engine]
   (.registerHelper
    engine "debug"

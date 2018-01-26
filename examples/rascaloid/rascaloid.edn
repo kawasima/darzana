@@ -1,0 +1,7 @@
+{:duct.core/environment :development
+
+ :duct.core/include ["darzana/config"]
+ :darzana.api-spec/swagger {:swagger-path "examples/rascaloid/swagger"}
+ :darzana.template/handlebars {:template-path "examples/rascaloid/ftl"}
+ :darzana/runtime {:routes-path "examples/rascaloid/scripts"}
+ :darzana.http-client/okhttp {}}

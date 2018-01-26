@@ -53,8 +53,6 @@
                                          (assoc-in [:static :resources] "public")
                                          (assoc-in [:params :nested] true)))})
 
-(derive :darzana.module/handler :duct/module)
-
 (defmethod ig/init-key ::handler [_ {:keys [endpoints middleware runtime]}]
   ((apply comp (reverse middleware))
    (make-handler (:routes runtime)
