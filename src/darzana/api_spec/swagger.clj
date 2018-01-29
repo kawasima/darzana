@@ -7,7 +7,8 @@
             [clojure.java.io :as io])
   (:import [java.io File FileFilter]
            [io.swagger.parser OpenAPIParser]
-           [io.swagger.v3.oas.models PathItem$HttpMethod]))
+           [io.swagger.parser.models ParseOptions]
+           [io.swagger.oas.models PathItem$HttpMethod]))
 
 (defn replace-url-variables [url context]
   (string/replace url #"\{([A-Za-z_]\w*)\}"
@@ -30,55 +31,84 @@
          (string/join "&"))))
 
 (defn build-url [swagger operation path context]
-  (let [scheme (first (.getSchemes swagger))
-        host (.getHost swagger)
-        base-path (.getBasePath swagger)
+  (let [server (first (.getServers swagger))
         query-string (build-query-string operation context)]
-    (str scheme "://" host base-path
+    (str (.getUrl server)
          (replace-url-variables path context)
          (when query-string (str "?" query-string)))))
 
 (defmulti build-model (fn [model swagger context ks] (class model)))
 
-(defmethod build-model io.swagger.models.properties.Property
-  [model swagger context ks])
-
-(defmethod build-model io.swagger.models.ModelImpl
+(defmethod build-model io.swagger.oas.models.media.StringSchema
+  [model swagger context ks]
+  )
+(defmethod build-model io.swagger.oas.models.media.ObjectSchema
   [model swagger context ks]
   (->> (.getProperties model)
        (map (fn [[k v]]
-              [k (get-in context (-> (into [:scope] ks) (into [k])))]))
+              (when-let [vkey (context/find-in-scopes context k)]
+                [k (get-in context (into [:scope] vkey))])))
        (into {})))
 
-(defmethod build-model io.swagger.models.RefModel
-  [ref-model swagger context ks]
-  (let [model (-> (.getDefinitions swagger)
-                  (.get (.getSimpleRef ref-model)))]
-    (build-model model swagger context ks)))
+(defmethod build-model io.swagger.oas.models.media.ArraySchema
+  [schema swagger context ks]
+  (->> (.getItems schema)
+       (map #(build-model % context ks))))
+
+(defn ref-schema [swagger ref]
+  (when-let [ref-name (last (re-find #"/([^/]+)$" ref))]
+    (-> (.getComponents swagger)
+        (.getSchemas)
+        (.get ref-name))))
 
 (defmethod build-model :default
-  [model swagger context ks]
-  (throw (UnsupportedOperationException. "Not implemented")))
+  [schema swagger context ks]
+  (if-let [schema (ref-schema swagger (.get$ref schema))]
+    (build-model schema swagger context ks)
+    (throw (UnsupportedOperationException. "Not implemented"))))
 
 (defn build-request-body [swagger operation context]
-  (let [models (some->> (.getParameters operation)
-                        (filter #(= (.getIn %) "body"))
-                        (map #(build-model (.getSchema %) swagger context
-                                           (context/find-in-scopes context (.getName %)))))
-        content-type (or (-> (.getConsumes operation)
-                             first)
-                         "") ]
+  (let [content-type (or (some-> (.getRequestBody operation)
+                                 (.getContent)
+                                 keys
+                                 first)
+                         "")
+        model (some-> (.getRequestBody operation)
+                      (.getContent)
+                      (.get content-type)
+                      (.getSchema)
+                      (build-model swagger context nil))]
     (cond
       (re-find #"/json$" content-type)
-      (json/generate-string (first models))
+      (json/generate-string model)
       :default nil)))
 
-(defn build-request-headers [operation method context]
-  (apply merge {}
-         (when-let [content-type (first (.getConsumes operation))]
+(defn ref-parameter [swagger ref]
+  (when-let [ref-name (last (re-find #"/([^/]+)$" ref))]
+    (-> (.getComponents swagger)
+        (.getParameters)
+        (.get ref-name))))
+
+(defn build-request-headers [swagger operation method context]
+  (let [header-params (->> (.getParameters operation)
+                           (map #(->> (if-let [ref (.get$ref %)]
+                                        (when-let [parameter (ref-parameter swagger ref)]
+                                          (when (= (.getIn parameter) "header")
+                                            [(.getName parameter)
+                                             (get-in context (into [:scope] (context/find-in-scopes context (.getName parameter))))])))))
+                           (into {}))]
+    (apply merge header-params
+         (when-let [content-type (some->> (.getRequestBody operation)
+                                          (.getContent)
+                                          keys
+                                          first)]
            {"Content-Type" content-type})
-         (when-let [accept (first (.getProduces operation))]
-           {"Accept" accept})))
+         (when-let [accept (some-> (.getResponses operation)
+                                   (.get "200")
+                                   (.getContent)
+                                   keys
+                                   first)]
+           {"Accept" accept}))))
 
 (defrecord SwaggerModel [apis]
   api-spec/ApiSpec
@@ -86,7 +116,7 @@
     (if-let [operation (get-operation apis id path method)]
       (merge {:url (build-url (get apis id) operation path context)
               :method method
-              :headers (build-request-headers operation method context)
+              :headers (build-request-headers (get apis id) operation method context)
               :body (build-request-body (get apis id) operation context)})))
   (spec-id [{:keys [apis]} {:keys [id path method]}]
     (let [operation (get-operation apis id path method)]
@@ -96,10 +126,12 @@
   (let [parser (OpenAPIParser.)
         apis (->> (io/file swagger-path)
                   (file-seq)
-                  (filter #(and (.endsWith (.getName %) ".json")
+                  (filter #(and (or (.endsWith (.getName %) ".json")
+                                    (.endsWith (.getName %) ".yaml"))
                                 (.isFile %)))
                   (map (fn [f]
-                         [(keyword (string/replace (.getName f) #"\.json$" ""))
-                          (.read parser (.getAbsolutePath f))]))
+                         [(keyword (string/replace (.getName f) #"\.\w+$" ""))
+                          (->> (.readLocation parser (.getAbsolutePath f) nil (ParseOptions.))
+                               (.getOpenAPI))]))
                   (into {}))]
     (map->SwaggerModel {:apis apis})))

@@ -1,4 +1,4 @@
-(ns darzana.template.handlebars
+(ns darzana.template.freemarker
   (:require [integrant.core :as ig]
             [clojure.java.io :as io]
             [clojure.java.data :refer [to-java]]
@@ -22,13 +22,16 @@
 (def default-options
   {:template-path "dev/resources/ftl"})
 
-(defn- create-config []
+(defn- create-config [options]
   (let [config (Configuration. (Version. 2 3 27))]
     (doto config
-      (.setTemplateLoader (FileTemplateLoader. (:template-path options)))
+      (.setTemplateLoader (FileTemplateLoader. (io/file (:template-path options))))
       (.setOutputFormat HTMLOutputFormat/INSTANCE))
     config))
 
 (defmethod ig/init-key :darzana.template/freemarker [_ options]
   (map->FreemarkerComponent {:config (create-config options)
                              :encoding (:encoding options "UTF-8")}))
+
+(defmethod ig/halt-key! :darzana.template/freemarker [_ {:keys [config]}]
+  (.clearTemplateCache config))

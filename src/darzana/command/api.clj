@@ -1,6 +1,7 @@
 (ns darzana.command.api
   "The commands for calling APIs."
-  (:require [clojure.core.async :as async]
+  (:require [clojure.pprint :refer :all]
+            [clojure.core.async :as async]
             [darzana.context :as context]
             [darzana.api-spec :as api-spec]
             [darzana.http-client :as http-client]
@@ -36,6 +37,7 @@
     (doseq [api apis]
       (try (execute-api context ch api)
            (catch Exception e
+             (.printStackTrace e)
              (async/put! ch {:error {(:id api)
                                {"message" e}}}))))
     @result))
