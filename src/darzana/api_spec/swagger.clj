@@ -22,6 +22,18 @@
           (.readOperationsMap)
           (.get (PathItem$HttpMethod/valueOf (string/upper-case (name method))))))
 
+(defn ref-parameter [swagger ref]
+  (when-let [ref-name (last (re-find #"/([^/]+)$" ref))]
+    (-> (.getComponents swagger)
+        (.getParameters)
+        (.get ref-name))))
+
+(defn ref-schema [swagger ref]
+  (when-let [ref-name (last (re-find #"/([^/]+)$" ref))]
+    (-> (.getComponents swagger)
+        (.getSchemas)
+        (.get ref-name))))
+
 (defn build-query-string [operation context]
   (let [params (->> (.getParameters operation)
                     (filter #(= (.getIn %) "query")))]
@@ -41,25 +53,27 @@
 
 (defmethod build-model io.swagger.oas.models.media.StringSchema
   [model swagger context ks]
-  )
+  (get-in context (into [:scope] ks)))
+
+(defmethod build-model io.swagger.oas.models.media.IntegerSchema
+  [schema swagger context ks]
+  (some-> (get-in context (into [:scope] ks))
+          #(if (= (.format schema) "int32")
+             (Integer/parseInt %)
+             (Long/parseLong %))))
+
 (defmethod build-model io.swagger.oas.models.media.ObjectSchema
   [model swagger context ks]
   (->> (.getProperties model)
        (map (fn [[k v]]
               (when-let [vkey (context/find-in-scopes context k)]
-                [k (get-in context (into [:scope] vkey))])))
+                [k (build-model v swagger context vkey)])))
        (into {})))
 
 (defmethod build-model io.swagger.oas.models.media.ArraySchema
   [schema swagger context ks]
   (->> (.getItems schema)
        (map #(build-model % context ks))))
-
-(defn ref-schema [swagger ref]
-  (when-let [ref-name (last (re-find #"/([^/]+)$" ref))]
-    (-> (.getComponents swagger)
-        (.getSchemas)
-        (.get ref-name))))
 
 (defmethod build-model :default
   [schema swagger context ks]
@@ -83,11 +97,6 @@
       (json/generate-string model)
       :default nil)))
 
-(defn ref-parameter [swagger ref]
-  (when-let [ref-name (last (re-find #"/([^/]+)$" ref))]
-    (-> (.getComponents swagger)
-        (.getParameters)
-        (.get ref-name))))
 
 (defn build-request-headers [swagger operation method context]
   (let [header-params (->> (.getParameters operation)

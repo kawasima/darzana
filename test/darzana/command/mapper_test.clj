@@ -11,9 +11,12 @@
                                    :commands [['darzana.command.api :as 'api]
                                               ['darzana.command.control :as 'control]
                                               ['darzana.command.mapper :as 'mapper]
-                                              ['darzana.command.renderer :as 'renderer]]}}
+                                              ['darzana.command.renderer :as 'renderer]]
+                                   :validator (ig/ref :darzana/validator)
+                                   :api-spec (ig/ref :darzana/api-spec)}
+                 :darzana.validator/hibernate-validator {}}
         system  (ig/init config)
         runtime (:darzana/runtime system)
         ctx (runtime/create-context runtime {:params {:id "1" :name "I'm cat"}})
         api {:id "petstore" :path "/pet" :method :post}]
-    (println (sut/read-value ctx {:scope :params} {:var :pet :type io.swagger.model.Pet}))))
+    (sut/read-value ctx {:scope :params} {:var :pet :type io.swagger.model.Pet})))
