@@ -3,17 +3,10 @@ package io.swagger.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
-
 
 /**
  * A tag for a pet
  **/
-
-@ApiModel(description = "A tag for a pet")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.UndertowCodegen")
 public class Tag   {
 
   private Long id = null;
@@ -26,8 +19,6 @@ public class Tag   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("id")
   public Long getId() {
     return id;
@@ -43,8 +34,6 @@ public class Tag   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("name")
   public String getName() {
     return name;

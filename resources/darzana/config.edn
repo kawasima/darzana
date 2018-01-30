@@ -5,6 +5,7 @@
  :darzana.module/handler {:runtime #ig/ref :darzana/runtime}
  :darzana.api-spec/swagger {}
  :darzana.validator/hibernate-validator {}
+ :darzana.template/freemarker {:template-path ""}
  :darzana.http-client/okhttp {}
 
  :darzana/runtime {:commands [[darzana.command.api :as api]

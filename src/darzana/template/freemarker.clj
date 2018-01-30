@@ -23,10 +23,12 @@
   {:template-path "dev/resources/ftl"})
 
 (defn- create-config [options]
-  (let [config (Configuration. (Version. 2 3 27))]
-    (doto config
-      (.setTemplateLoader (FileTemplateLoader. (io/file (:template-path options))))
-      (.setOutputFormat HTMLOutputFormat/INSTANCE))
+  (let [config (Configuration. (Version. 2 3 27))
+        dir (io/file (:template-path options))]
+    (when (.exists dir)
+      (doto config
+        (.setTemplateLoader (FileTemplateLoader. dir))
+        (.setOutputFormat HTMLOutputFormat/INSTANCE)))
     config))
 
 (defmethod ig/init-key :darzana.template/freemarker [_ options]

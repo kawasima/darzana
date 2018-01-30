@@ -1,8 +1,6 @@
 package io.swagger.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.validator.constraints.Length;
 
 import java.util.Objects;
@@ -11,7 +9,6 @@ import java.util.Objects;
 /**
  * A category for a pet
  **/
-@ApiModel(description = "A category for a pet")
 public class Category {
 
     private Long id = null;
@@ -26,8 +23,6 @@ public class Category {
         return this;
     }
 
-
-    @ApiModelProperty(value = "")
     @JsonProperty("id")
     public Long getId() {
         return id;
@@ -44,8 +39,6 @@ public class Category {
         return this;
     }
 
-
-    @ApiModelProperty(value = "")
     @JsonProperty("name")
     public String getName() {
         return name;

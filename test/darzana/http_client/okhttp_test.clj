@@ -20,24 +20,7 @@
         runtime  (:darzana/runtime system)
         ctx      (runtime/create-context runtime {:params {:petId "1"}})
         response (promise)]
-    (http-client/request (:darzana.http-client/okhttp system)
+    #_(http-client/request (:darzana.http-client/okhttp system)
                          {:url "http://github.com"}
                          #(deliver response %)
-                         #(println %))
-    (println @response)))
-
-(deftest test-spec
-  (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
-  (s/def ::email-type (s/with-gen
-                        (s/and string? #(re-matches email-regex %))
-                        #(gen/fmap (fn [[a b]] (str a "@" b ".jp"))
-                                   (gen/tuple (gen/string-alphanumeric)
-                                              (gen/string-alphanumeric)))))
-  (s/def ::email ::email-type)
-  (s/def ::name string?)
-  (s/def ::age int?)
-  (s/def ::person (s/keys :req [::name ::age ::email]))
-  (pprint (gen/sample (s/gen ::person) 100))
-
-
-  )
+                         #(println %))))

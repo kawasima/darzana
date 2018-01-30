@@ -1,5 +1,6 @@
 (ns darzana.command.mapper
   (:require [clojure.java.data :refer [to-java from-java]]
+            [clojure.spec.alpha :as s]
             [darzana.validator :as v]))
 
 (defmethod clojure.java.data/to-java [Long String] [clazz value]
@@ -13,9 +14,12 @@
 
 (defn- map-to-type [to-type from-value validator]
   (let [java-obj (to-java to-type from-value)]
-    (v/validate validator java-obj)))
+    (if-let [err (v/validate validator java-obj)]
+      (with-meta err {:scope :error})
+      java-obj)))
 
-(defn read-value [{{validator :validator} :runtime :as context} from to]
+(defn read-value
+  [{{validator :validator} :runtime :as context} from to]
   (let [{from-scope :scope from-var :var :or {from-scope :params}} from
         {to-scope   :scope to-var   :var to-type :type :or {to-scope :page}} to
         from-value (if from-var

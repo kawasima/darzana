@@ -16,7 +16,7 @@
            (let [ks-with-scope (into [scope-name] ks)]
              (when (get-in scope ks-with-scope)
                ks-with-scope)))
-         (filter #(not (nil? %)))
+         (keep identity)
          first)))
 
 (defn find-in-scopes

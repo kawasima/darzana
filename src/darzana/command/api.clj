@@ -32,14 +32,14 @@
                                  i 1]
                    (let [res (async/<! ch)]
                      (if (< i (count apis))
-                       (recur (merge api-result res) (inc i))
-                       (deliver result (merge api-result res)))))]
+                       (recur (merge-with merge api-result res) (inc i))
+                       (deliver result (merge-with merge api-result res)))))]
     (doseq [api apis]
       (try (execute-api context ch api)
            (catch Exception e
              (.printStackTrace e)
              (async/put! ch {:error {(:id api)
-                               {"message" e}}}))))
+                                     {"message" e}}}))))
     @result))
 
 (defn call-api

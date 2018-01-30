@@ -4,7 +4,8 @@
             [cheshire.core :as json]
             [darzana.api-spec :as api-spec]
             [darzana.context :as context]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [ring.util.codec :refer [url-encode]])
   (:import [java.io File FileFilter]
            [io.swagger.parser OpenAPIParser]
            [io.swagger.parser.models ParseOptions]
@@ -34,33 +35,21 @@
         (.getSchemas)
         (.get ref-name))))
 
-(defn build-query-string [operation context]
-  (let [params (->> (.getParameters operation)
-                    (filter #(= (.getIn %) "query")))]
-    (->> params
-         (map #(let [k (.getName %)]
-                 (str k "=" (get-in context (context/find-in-scopes context (keyword k))))))
-         (string/join "&"))))
-
-(defn build-url [swagger operation path context]
-  (let [server (first (.getServers swagger))
-        query-string (build-query-string operation context)]
-    (str (.getUrl server)
-         (replace-url-variables path context)
-         (when query-string (str "?" query-string)))))
-
 (defmulti build-model (fn [model swagger context ks] (class model)))
 
 (defmethod build-model io.swagger.oas.models.media.StringSchema
   [model swagger context ks]
-  (get-in context (into [:scope] ks)))
+  (when ks
+    (get-in context (into [:scope] ks))))
 
 (defmethod build-model io.swagger.oas.models.media.IntegerSchema
   [schema swagger context ks]
-  (some-> (get-in context (into [:scope] ks))
-          #(if (= (.format schema) "int32")
-             (Integer/parseInt %)
-             (Long/parseLong %))))
+  (some-> ks
+          (#(get-in context (into [:scope] %)))
+          ((fn [v]
+             (if (= (.getFormat schema) "int32")
+               (Integer/parseInt v)
+               (Long/parseLong v))))))
 
 (defmethod build-model io.swagger.oas.models.media.ObjectSchema
   [model swagger context ks]
@@ -80,6 +69,29 @@
   (if-let [schema (ref-schema swagger (.get$ref schema))]
     (build-model schema swagger context ks)
     (throw (UnsupportedOperationException. "Not implemented"))))
+
+
+(defn build-query-string [operation swagger context]
+  (let [params (->> (.getParameters operation)
+                    (filter #(= (.getIn %) "query")))]
+    (->> params
+         (map #(let [key (.getName %)
+                     ks  (context/find-in-scopes context key)]
+                 (if-let [v (if (.get$ref %)
+                              (build-model % swagger context ks)
+                              (build-model (.getSchema %) swagger context ks))]
+                   (str (url-encode key) "=" (url-encode v))) ))
+         (keep identity)
+         (string/join "&")
+         not-empty)))
+
+(defn build-url [swagger operation path context]
+  (let [server (first (.getServers swagger))
+        query-string (build-query-string operation swagger context)]
+    (str (.getUrl server)
+         (replace-url-variables path context)
+         (when query-string (str "?" query-string)))))
+
 
 (defn build-request-body [swagger operation context]
   (let [content-type (or (some-> (.getRequestBody operation)
@@ -128,19 +140,20 @@
               :headers (build-request-headers (get apis id) operation method context)
               :body (build-request-body (get apis id) operation context)})))
   (spec-id [{:keys [apis]} {:keys [id path method]}]
-    (let [operation (get-operation apis id path method)]
-      (.getOperationId operation))))
+    (if-let [operation (get-operation apis id path method)]
+      (.getOperationId operation)
+      (keyword (str (name id) "-" (clojure.string/replace path #"/" "-") "-" (name method))))))
 
 (defmethod ig/init-key :darzana.api-spec/swagger [_ {:keys [swagger-path]}]
   (let [parser (OpenAPIParser.)
-        apis (->> (io/file swagger-path)
-                  (file-seq)
-                  (filter #(and (or (.endsWith (.getName %) ".json")
-                                    (.endsWith (.getName %) ".yaml"))
-                                (.isFile %)))
-                  (map (fn [f]
-                         [(keyword (string/replace (.getName f) #"\.\w+$" ""))
-                          (->> (.readLocation parser (.getAbsolutePath f) nil (ParseOptions.))
-                               (.getOpenAPI))]))
-                  (into {}))]
+        apis (some->> (io/file swagger-path)
+                      (file-seq)
+                      (filter #(and (or (.endsWith (.getName %) ".json")
+                                        (.endsWith (.getName %) ".yaml"))
+                                    (.isFile %)))
+                      (map (fn [f]
+                             [(keyword (string/replace (.getName f) #"\.\w+$" ""))
+                              (->> (.readLocation parser (.getAbsolutePath f) nil (ParseOptions.))
+                                   (.getOpenAPI))]))
+                      (into {}))]
     (map->SwaggerModel {:apis apis})))

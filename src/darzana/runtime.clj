@@ -17,9 +17,10 @@
       (refer 'clojure.core)
       (doseq [cmds commands]
         (eval `(require '~cmds)))
-      (into {} (for [f (->> (file-seq (io/file routes-path))
-                            (filter #(and (.isFile %)
-                                          (.endsWith (.getName %) ".clj"))))]
+      (into {} (for [f (some->> (io/file routes-path)
+                                (file-seq)
+                                (filter #(and (.isFile %)
+                                              (.endsWith (.getName %) ".clj"))))]
 
                   (eval (read-string (slurp f))))))))
 

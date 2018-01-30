@@ -4,8 +4,6 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.model.Category;
 import io.swagger.model.Tag;
 import java.util.ArrayList;
@@ -16,9 +14,6 @@ import java.util.List;
 /**
  * A pet for sale in the pet store
  **/
-
-@ApiModel(description = "A pet for sale in the pet store")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.UndertowCodegen")
 public class Pet   {
 
   private Long id = null;
@@ -55,8 +50,6 @@ public class Pet   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("id")
   public Long getId() {
     return id;
@@ -72,8 +65,6 @@ public class Pet   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("category")
   public Category getCategory() {
     return category;
@@ -89,8 +80,6 @@ public class Pet   {
     return this;
   }
 
-
-  @ApiModelProperty(example = "doggie", required = true, value = "")
   @JsonProperty("name")
   public String getName() {
     return name;
@@ -106,8 +95,6 @@ public class Pet   {
     return this;
   }
 
-
-  @ApiModelProperty(required = true, value = "")
   @JsonProperty("photoUrls")
   public List<String> getPhotoUrls() {
     return photoUrls;
@@ -123,8 +110,6 @@ public class Pet   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("tags")
   public List<Tag> getTags() {
     return tags;
@@ -141,8 +126,6 @@ public class Pet   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "pet status in the store")
   @JsonProperty("status")
   public StatusEnum getStatus() {
     return status;

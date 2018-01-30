@@ -4,8 +4,6 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import java.util.Date;
 
 
@@ -13,9 +11,6 @@ import java.util.Date;
 /**
  * An order for a pets from the pet store
  **/
-
-@ApiModel(description = "An order for a pets from the pet store")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.UndertowCodegen")
 public class Order   {
 
   private Long id = null;
@@ -52,8 +47,6 @@ public class Order   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("id")
   public Long getId() {
     return id;
@@ -69,8 +62,6 @@ public class Order   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("petId")
   public Long getPetId() {
     return petId;
@@ -86,8 +77,6 @@ public class Order   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("quantity")
   public Integer getQuantity() {
     return quantity;
@@ -103,8 +92,6 @@ public class Order   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("shipDate")
   public Date getShipDate() {
     return shipDate;
@@ -121,8 +108,6 @@ public class Order   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "Order Status")
   @JsonProperty("status")
   public StatusEnum getStatus() {
     return status;
@@ -138,8 +123,6 @@ public class Order   {
     return this;
   }
 
-
-  @ApiModelProperty(value = "")
   @JsonProperty("complete")
   public Boolean getComplete() {
     return complete;

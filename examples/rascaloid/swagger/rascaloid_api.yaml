@@ -55,6 +55,21 @@ paths:
         '405':
           description: Invalid input
   '/project/{projectId}':
+    get:
+      tags:
+        - project
+      summary: find an existing project
+      operationId: findProject
+      parameters:
+        - $ref: '#/component/parameters/projectId'
+        - $ref: '#/components/parameters/bouncrCredential'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
     put:
       tags:
         - project
