@@ -13,7 +13,7 @@
             <tbody>
                 <#items as iteration>
                     <tr>
-                        <td>${iteration.id}</td>
+                        <td><a href="/project/${project.id}/iteration/${iteration.id}">${iteration.id}</a></td>
                         <td>${iteration.subject}</td>
                         <td></td>
                     </tr>

@@ -1,5 +1,6 @@
 (ns darzana.runtime
   (:require [integrant.core :as ig]
+            [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]))
 
 (def default-options
@@ -21,8 +22,7 @@
                                 (file-seq)
                                 (filter #(and (.isFile %)
                                               (.endsWith (.getName %) ".clj"))))]
-
-                  (eval (read-string (slurp f))))))))
+                 (eval (read-string (slurp f))))))))
 
 (defn keyword-to-str [v]
   (cond

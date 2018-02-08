@@ -45,5 +45,6 @@
 (defn call-api
   "Call the giving APIs."
   [context api]
-  (let [apis (if (map? api) [api] api)]
-    (update-in context [:scope] merge (call-api-internal context apis))))
+  (let [apis (if (map? api) [api] api)
+        context (update-in context [:scope] merge (call-api-internal context apis))]
+    context))

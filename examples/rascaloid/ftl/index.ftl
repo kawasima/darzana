@@ -11,7 +11,7 @@
                 </tr>
                 <#items as project>
                     <tr>
-                        <td>${project.id}</td>
+                        <td><a href="/project/${project.id}">${project.id}</a></td>
                         <td>${project.name}</td>
                         <td>${project.description}</td>
                     </tr>

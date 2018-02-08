@@ -23,7 +23,8 @@
   (let [{from-scope :scope from-var :var :or {from-scope :params}} from
         {to-scope   :scope to-var   :var to-type :type :or {to-scope :page}} to
         from-value (if from-var
-                     (get-in context [:scope from-scope from-var])
+                     (get-in context (into [:scope from-scope]
+                                           (if (coll? from-var) from-var [from-var])))
                      (get-in context [:scope from-scope]))
         to-value (if to-type
                    (map-to-type to-type from-value validator)

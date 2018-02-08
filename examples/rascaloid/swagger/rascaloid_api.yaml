@@ -113,7 +113,7 @@ paths:
       responses:
         '404':
           description: Project not found
-  '/project/{projectId}/stories':
+  /project/{projectId}/stories:
     get:
       tags:
         - stories
@@ -142,8 +142,12 @@ paths:
             schema:
               $ref: '#/components/schemas/Story'
       responses:
-        '204':
+        '200':
           description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
   '/story/{storyId}':
     get:
       tags:
@@ -250,6 +254,59 @@ paths:
       responses:
         '204':
           description: Successful
+  /iteration/{iterationId}:
+    get:
+      tags:
+        - iteration
+      parameters:
+        - $ref: '#/components/parameters/bouncrCredential'
+        - $ref: '#/components/parameters/iterationId'
+      responses:
+        '200':
+          description: iteration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Iteration'
+  /iteration/{iterationId}/kanban:
+    get:
+      tags:
+        - iteration
+      parameters:
+        - $ref: '#/components/parameters/bouncrCredential'
+        - $ref: '#/components/parameters/iterationId'
+      responses:
+        '200':
+          description: Get iteration stories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IterationStory'
+  /iteration/{iterationId}/addStory/{storyId}:
+    put:
+      tags:
+        - iteration
+      parameters:
+        - $ref: '#/components/parameters/bouncrCredential'
+        - $ref: '#/components/parameters/iterationId'
+        - $ref: '#/components/parameters/storyId'
+      responses:
+        '204':
+          description: Successful
+  /iteration/{iterationId}/removeStory/{storyId}:
+    delete:
+      tags:
+        - iteration
+      parameters:
+        - $ref: '#/components/parameters/bouncrCredential'
+        - $ref: '#/components/parameters/iterationId'
+        - $ref: '#/components/parameters/storyId'
+      responses:
+        '204':
+          description: Successful
+
   '/task/{taskId}':
     get:
       tags:
@@ -316,6 +373,24 @@ components:
         point:
           type: number
           format: double
+      example:
+        subject: Story1
+        description: Implements story1
+        point: 5
+    IterationStory:
+      type: object
+      properties:
+        subject:
+          type: string
+        description:
+          type: string
+        point:
+          type: number
+          format: double
+        developmentTasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
       example:
         subject: Story1
         description: Implements story1

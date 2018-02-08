@@ -13,8 +13,9 @@
 
 (defn replace-url-variables [url context]
   (string/replace url #"\{([A-Za-z_]\w*)\}"
-                  #(when-let [ks (context/find-in-scopes context (-> % second keyword))]
-                     (get-in context (into [:scope] ks)))))
+                  #(if-let [ks (context/find-in-scopes context (-> % second keyword))]
+                     (str (get-in context (into [:scope] ks)))
+                     "")))
 
 (defn get-operation [swagger api-name path method]
   (some-> (get swagger api-name)
@@ -51,6 +52,22 @@
                (Integer/parseInt v)
                (Long/parseLong v))))))
 
+(defmethod build-model io.swagger.oas.models.media.NumberSchema
+  [schema swagger context ks]
+  (some-> ks
+          (#(get-in context (into [:scope] %)))
+          ((fn [v]
+             (if (= (.getFormat schema) "float")
+               (Float/parseFloat v)
+               (Double/parseDouble v))))))
+
+(defmethod build-model io.swagger.oas.models.media.DateSchema
+  [model swagger context ks]
+  (some-> ks
+          (#(get-in context (into [:scope] %)))
+          ((fn [v]
+             v))))
+
 (defmethod build-model io.swagger.oas.models.media.ObjectSchema
   [model swagger context ks]
   (->> (.getProperties model)
@@ -66,9 +83,9 @@
 
 (defmethod build-model :default
   [schema swagger context ks]
-  (if-let [schema (ref-schema swagger (.get$ref schema))]
+  (if-let [schema (some->> (.get$ref schema) (ref-schema swagger))]
     (build-model schema swagger context ks)
-    (throw (UnsupportedOperationException. "Not implemented"))))
+    (throw (UnsupportedOperationException. (str "Not implemented" (class schema))))))
 
 
 (defn build-query-string [operation swagger context]
@@ -134,11 +151,12 @@
 (defrecord SwaggerModel [apis]
   api-spec/ApiSpec
   (build-request [{:keys [apis]} {:keys [id path method]} context]
-    (if-let [operation (get-operation apis id path method)]
+    (when-let [operation (get-operation apis id path method)]
       (merge {:url (build-url (get apis id) operation path context)
               :method method
               :headers (build-request-headers (get apis id) operation method context)
-              :body (build-request-body (get apis id) operation context)})))
+              :body    (or (build-request-body (get apis id) operation context) "")})
+      ))
   (spec-id [{:keys [apis]} {:keys [id path method]}]
     (if-let [operation (get-operation apis id path method)]
       (.getOperationId operation)
