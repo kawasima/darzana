@@ -8,9 +8,10 @@
     (template/render-html template-engine context template)))
 
 (defn- collect-values [context var-names]
-  (let [var-names (if (seq? var-names) var-names [var-names])]
+  (let [var-names (if (coll? var-names) var-names [var-names])]
     (->> var-names
-         (map (fn [k] [k (get-in context (into [:scope] (context/find-in-scopes context k)))]))
+         (map (fn [k]
+                [k (get-in context (into [:scope] (context/find-in-scopes context k)))]))
          (reduce #(assoc %1 (first %2) (second %2)) {}))))
 
 (defn- render-json [context var-names]

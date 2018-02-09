@@ -17,6 +17,14 @@
             <label for="task-estimated-hours">Estimated hours:</label>
             <input id="task-estimated-hours" class="form-control" type="number" name="estimatedHours">
         </div>
+        <div class="form-group">
+            <label for="task-stauts">Status:</label>
+            <select id="task-status" class="form-control" name="statusId">
+                <#list taskStatus as state>
+                    <option value="${state.id}">${state.name}</option>
+                </#list>
+            </select>
+        </div>
         <button type="submit" class="btn btn-primary">Save</button>
     </form>
 </@layout.layout>

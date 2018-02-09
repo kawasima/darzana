@@ -331,6 +331,19 @@ paths:
         '204':
           description: Successful
   /taskStatus:
+    get:
+      tags:
+        - taskStatus
+      parameters:
+        - $ref: '#/components/parameters/bouncrCredential'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskStatus'
     post:
       tags:
         - taskStatus

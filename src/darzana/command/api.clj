@@ -9,21 +9,24 @@
             [clojure.tools.logging :as log]))
 
 (defn- execute-api [{{:keys [http-client api-spec]} :runtime :as context} ch api]
-  (http-client/request
-   http-client
-   (api-spec/build-request api-spec api context)
-   (fn [raw-res]
-     (let [res (http-client/parse-response http-client raw-res)]
-       (if (< (:status res) 300)
-         (async/put! ch {:page {(or (:var api) (api-spec/spec-id api-spec api))
-                                (:body res)}})
-         (async/put! ch {:error
-                         {(:id api) {:status (:status res)
-                                     :message (:body res)}}}))))
-   (fn [ex]
-     (async/put! ch {:error
-                     {(:id api)
-                      {:message (.getMessage ex)}}}))))
+  (let [req (api-spec/build-request api-spec api context)]
+    (http-client/request
+     http-client
+     req
+     (fn [raw-res]
+       (let [res (http-client/parse-response http-client raw-res)]
+         (if (< (:status res) 300)
+           (async/put! ch {:page {(or (:var api) (api-spec/spec-id api-spec api))
+                                  (:body res)}})
+           (async/put! ch {:error
+                           {(:url req)
+                            {"request" req
+                             "status"  (:status res)
+                             "message" (:body res)}}}))))
+     (fn [ex]
+       (async/put! ch {:error
+                       {(:url req)
+                        {"message" (.getMessage ex)}}})))))
 
 (defn- call-api-internal [context apis]
   (let [ch (async/chan)
@@ -38,8 +41,8 @@
       (try (execute-api context ch api)
            (catch Exception e
              (.printStackTrace e)
-             (async/put! ch {:error {(:id api)
-                                     {"message" e}}}))))
+             (async/put! ch {:error {(name (:id api))
+                                     {"message" (.getMessage e)}}}))))
     @result))
 
 (defn call-api
