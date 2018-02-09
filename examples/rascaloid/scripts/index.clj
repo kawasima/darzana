@@ -3,4 +3,6 @@
                  :path "/projects"
                  :method :get
                  :var "projects"})
-  (renderer/render {:template "index.ftl"}))
+  (control/if-success
+   (renderer/render {:template "index.ftl"})
+   (renderer/render {:template "error.ftl"})))

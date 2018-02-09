@@ -421,6 +421,9 @@ components:
         estimatedHours:
           type: number
           format: double
+        statusId:
+          type: number
+          format: int32
         status:
           $ref: '#/components/schemas/TaskStatus'
       example:

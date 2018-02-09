@@ -1,6 +1,6 @@
 <#import "../layout.ftl" as layout>
 <@layout.layout>
-    <h1>Iteration: ${iteration.subject} / Project: ${project.name}</h1>
+    <h1>Iteration: ${iteration.subject} / Project: <a href="/project/${project.id}">${project.name}</a></h1>
 
     <h2>stories</h2>
     <#list stories>

@@ -11,4 +11,6 @@
                   :path "/project/{projectId}"
                   :method :get
                   :var "project"}])
-  (renderer/render {:template "story/show.ftl"}))
+  (control/if-success
+   (renderer/render {:template "story/show.ftl"})
+   (renderer/render {:template "error.ftl"})))
