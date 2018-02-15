@@ -327,6 +327,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/bouncrCredential'
         - $ref: '#/components/parameters/taskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
       responses:
         '204':
           description: Successful

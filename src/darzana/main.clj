@@ -5,9 +5,9 @@
 
 (duct/load-hierarchy)
 
-(defn -main [& args]
+(defn -main [config & args]
   (let [keys (or (duct/parse-keys args) [:duct/daemon])]
-    (-> (io/resource "darzana/config.edn")
+    (-> (io/file config)
         duct/read-config
         (duct/prep keys)
         (duct/exec keys))))

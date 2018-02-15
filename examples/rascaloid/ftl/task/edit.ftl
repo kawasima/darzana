@@ -1,27 +1,27 @@
 <#import "../layout.ftl" as layout>
 <@layout.layout>
-    <h1>New Task</h1>
-    <form method="post" action="/project/${projectId}/story/${storyId}/tasks/create">
+    <h1>Edit Task</h1>
+    <form method="post" action="/project/${projectId}/story/${storyId}/task/${taskId}/update">
         <#if iterationId??>
             <input type="hidden" name="iterationId" value="${iterationId}">
         </#if>
         <div class="form-group">
             <label for="task-subject">Subject:</label>
-            <input id="task-subject" class="form-control" type="text" name="subject">
+            <input id="task-subject" class="form-control" type="text" name="subject" value="${task.subject}">
         </div>
         <div class="form-group">
             <label for="task-description">Description:</label>
-            <textarea id="task-description" class="form-control" name="description"></textarea>
+            <textarea id="task-description" class="form-control" name="description">${task.description}</textarea>
         </div>
         <div class="form-group">
             <label for="task-estimated-hours">Estimated hours:</label>
-            <input id="task-estimated-hours" class="form-control" type="number" name="estimatedHours">
+            <input id="task-estimated-hours" class="form-control" type="number" name="estimatedHours" value="${task.estimatedHours}">
         </div>
         <div class="form-group">
             <label for="task-stauts">Status:</label>
             <select id="task-status" class="form-control" name="statusId">
                 <#list taskStatus as state>
-                    <option value="${state.id}">${state.name}</option>
+                    <option value="${state.id}"<#if state.id = task.statusId>selected="selected"</#if>>${state.name}</option>
                 </#list>
             </select>
         </div>

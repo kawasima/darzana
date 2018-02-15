@@ -30,7 +30,7 @@
   :main ^:skip-aot darzana.main
   :target-path "target/%s/"
   :resource-paths ["resources"]
-  :prep-tasks ["javac" "compile" ["run" ":duct/compiler"]]
+  :prep-tasks ["javac" "compile"]
 
   :profiles
   {:dev  [:project/dev  :profiles/dev]
@@ -41,9 +41,9 @@
    :profiles/dev  {}
    :project/dev   {:dependencies [[integrant/repl "0.3.0"]
                                   [org.jsr107.ri/cache-ri-impl "1.0.0"]
-                                  [eftest "0.4.2"]
+                                  [eftest "0.4.3"]
                                   [org.clojure/test.check "0.9.0"]
-                                  [kerodon "0.8.0"]]
+                                  [kerodon "0.9.0"]]
                    :source-paths   ["dev/src"]
                    :java-source-paths ["dev/src"]
                    :resource-paths ["dev/resources"]
