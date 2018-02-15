@@ -68,83 +68,41 @@ Render a HTML template.
 This is a command for conditional processing. If the error scope is empty,
 
 ```clj
+(control/if-success
+ (renderer/render {:template "pet/show"})
+ (renderer/render {:template "error"}))
 ```
 
 ## Developing
 
 ### Setup
 
-When you first clone this repository, run:
+Create a `deps.edn`.
+
+```
+{:deps
+ {net.unit8.darzana/darzana {:mvn/version "1.0.0-SNAPSHOT"}}}
+```
+
+`application.edn`
+
+```
+{:duct.core/environment :development
+
+ :duct.core/include ["darzana/config"]
+ :darzana.api-spec/swagger {:swagger-path "swagger"}
+ :darzana.template/freemarker {:template-path "ftl"}
+ :darzana.http-client/okhttp {}
+ :darzana/runtime {:routes-path "scripts"}}
+```
+
+Run server using by `clj` command.
 
 ```sh
-lein setup
+% clj -m darzana.main application.edn
 ```
-
-This will create files for local configuration, and prep your system
-for the project.
-
-### Environment
-
-To begin developing, start with a REPL.
-
-```sh
-lein repl
-```
-
-Then load the development environment.
-
-```clojure
-user=> (dev)
-:loaded
-```
-
-Run `go` to initiate and start the system.
-
-```clojure
-dev=> (go)
-:started
-```
-
-By default this creates a web server at <http://localhost:3000>.
-
-When you make changes to your source files, use `reset` to reload any
-modified files and reset the server. Changes to CSS or ClojureScript
-files will be hot-loaded into the browser.
-
-```clojure
-dev=> (reset)
-:reloading (...)
-:resumed
-```
-
-If you want to access a ClojureScript REPL, make sure that the site is loaded
-in a browser and run:
-
-```clojure
-dev=> (cljs-repl)
-Waiting for browser connection... Connected.
-To quit, type: :cljs/quit
-nil
-cljs.user=>
-```
-
-### Testing
-
-Testing is fastest through the REPL, as you avoid environment startup
-time.
-
-```clojure
-dev=> (test)
-...
-```
-
-But you can also run tests through Leiningen.
-
-```sh
-lein test
-```
-
 
 ## Legal
 
-Copyright © 2017 kawasima
+Copyright © 2017-2018 kawasima
+Distributed under the Eclipse Public License, the same as Clojure.

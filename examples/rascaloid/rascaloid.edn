@@ -1,9 +1,0 @@
-{:duct.core/environment :development
-
- :duct.server.http/jetty {:port 3003}
- :duct.core/include ["darzana/config"]
- :darzana.api-spec/swagger {:swagger-path "examples/rascaloid/swagger"}
- :darzana.template/freemarker {:template-path "examples/rascaloid/ftl"}
- :darzana/runtime {:routes-path "examples/rascaloid/scripts"
-                   :application-scope {"X-Bouncr-Credential" "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyMSIsIm5hbWUiOiJUZXN0IFVzZXIxIiwicGVybWlzc2lvbnMiOlsicHJvamVjdDpyZWFkIiwicHJvamVjdDpjcmVhdGUiLCJwcm9qZWN0OnVwZGF0ZSIsInByb2plY3Q6ZGVsZXRlIl19.jlDVRGqFQ6_Kt4Agh5fN2_KVamXwM680sEjOKG0ku5s"}}
- :darzana.http-client/okhttp {}}

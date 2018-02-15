@@ -1,6 +1,10 @@
-(defproject darzana "1.0.0-SNAPSHOT"
-  :description "Build BFF like Scratch"
+(defproject net.unit8.darzana/darzana "1.0.0-SNAPSHOT"
+  :description "A Backends for Frontends Tool"
   :url "http://github.com/kawasima/darzana"
+  :license {:name "Eclipse Public License - v 1.0"
+            :url "http://www.eclipse.org/legal/epl-v10.html"
+            :distribution :repo
+            :comments "same as Clojure"}
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/spec.alpha "0.1.143"]
@@ -25,7 +29,8 @@
                  [com.squareup.okhttp3/okhttp "3.9.1"]
                  [org.hibernate.validator/hibernate-validator "6.0.7.Final"]
                  [org.glassfish/javax.el "3.0.1-b08"]
-                 [org.slf4j/slf4j-nop "1.7.25"]]
+                 [org.slf4j/slf4j-simple "1.7.25"]
+                 [integrant/repl "0.3.0"]]
   :plugins [[duct/lein-duct "0.10.6"]]
   :main ^:skip-aot darzana.main
   :target-path "target/%s/"

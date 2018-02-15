@@ -27,6 +27,7 @@
         dir (io/file (:template-path options))]
     (when (.exists dir)
       (doto config
+        (.setAPIBuiltinEnabled true)
         (.setTemplateLoader (FileTemplateLoader. dir))
         (.setOutputFormat HTMLOutputFormat/INSTANCE)))
     config))
