@@ -2,17 +2,19 @@
  :duct.core/environment :production
 
  :duct.module/logging {}
+ :duct.logger/timbre {:level :info}
  :darzana.module/handler {:runtime #ig/ref :darzana/runtime}
- :darzana.api-spec/swagger {}
+ :darzana.api-spec/swagger {:logger #ig/ref :duct/logger}
  :darzana.validator/hibernate-validator {}
- :darzana.template/freemarker {:template-path ""}
- :darzana.http-client/okhttp {}
+ :darzana.http-client/okhttp {:logger #ig/ref :duct/logger}
 
  :darzana/runtime {:commands [[darzana.command.api :as api]
                               [darzana.command.control :as control]
                               [darzana.command.mapper :as mapper]
+                              [darzana.command.log :as log]
                               [darzana.command.renderer :as renderer]]
                    :api-spec #ig/ref :darzana/api-spec
                    :template #ig/ref :darzana/template
                    :validator #ig/ref :darzana/validator
-                   :http-client #ig/ref :darzana/http-client}}
+                   :http-client #ig/ref :darzana/http-client
+                   :logger #ig/ref :duct/logger}}

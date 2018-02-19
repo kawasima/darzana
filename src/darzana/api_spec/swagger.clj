@@ -1,5 +1,6 @@
 (ns darzana.api-spec.swagger
-  (:require [integrant.core :as ig]
+  (:require [duct.logger :as logger]
+            [integrant.core :as ig]
             [clojure.string :as string]
             [cheshire.core :as json]
             [darzana.api-spec :as api-spec]
@@ -87,7 +88,6 @@
     (build-model schema swagger context ks)
     (throw (UnsupportedOperationException. (str "Not implemented" (class schema))))))
 
-
 (defn build-query-string [operation swagger context]
   (let [params (->> (.getParameters operation)
                     (filter #(= (.getIn %) "query")))]
@@ -148,21 +148,23 @@
                                    first)]
            {"Accept" accept}))))
 
-(defrecord SwaggerModel [apis]
+(defrecord SwaggerModel [apis logger]
   api-spec/ApiSpec
   (build-request [{:keys [apis]} {:keys [id path method]} context]
     (when-let [operation (get-operation apis id path method)]
-      (merge {:url (build-url (get apis id) operation path context)
-              :method method
-              :headers (build-request-headers (get apis id) operation method context)
-              :body    (or (build-request-body (get apis id) operation context) "")})
-      ))
+      (let [request {:url (build-url (get apis id) operation path context)
+                     :method method
+                     :headers (build-request-headers (get apis id) operation method context)
+                     :body    (or (build-request-body (get apis id) operation context) "")}]
+        (logger/log logger :debug ::build-request request)
+        request)
+      (logger/log logger :warn ::build-request (str "operation not found id=" id ",path=" path ",method=" method))))
   (spec-id [{:keys [apis]} {:keys [id path method]}]
     (if-let [operation (get-operation apis id path method)]
       (.getOperationId operation)
       (keyword (str (name id) "-" (clojure.string/replace path #"/" "-") "-" (name method))))))
 
-(defmethod ig/init-key :darzana.api-spec/swagger [_ {:keys [swagger-path]}]
+(defmethod ig/init-key :darzana.api-spec/swagger [_ {:keys [swagger-path logger]}]
   (let [parser (OpenAPIParser.)
         apis (some->> (io/file swagger-path)
                       (file-seq)
@@ -174,4 +176,4 @@
                               (->> (.readLocation parser (.getAbsolutePath f) nil (ParseOptions.))
                                    (.getOpenAPI))]))
                       (into {}))]
-    (map->SwaggerModel {:apis apis})))
+    (map->SwaggerModel {:apis apis :logger logger})))

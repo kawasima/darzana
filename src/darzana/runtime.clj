@@ -54,13 +54,15 @@
                                                    template
                                                    api-spec
                                                    http-client
-                                                   application-scope]}]
+                                                   application-scope
+                                                   logger]}]
   (let [routes (load-routes commands routes-path)]
     (map->DarzanaRuntime (merge default-options
                                 {:routes ["/" routes]
                                  :template template
                                  :api-spec api-spec
                                  :validator validator
-                                 :http-client http-client}
+                                 :http-client http-client
+                                 :logger logger}
                                 (when application-scope
                                   {:application-scope application-scope})))))

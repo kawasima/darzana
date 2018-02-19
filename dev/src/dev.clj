@@ -13,7 +13,7 @@
 (duct/load-hierarchy)
 
 (defn read-config []
-  (duct/read-config "examples/rascaloid/rascaloid.edn"))
+  (duct/read-config "dev/resources/dev.edn"))
 
 (defn test []
   (eftest/run-tests (eftest/find-tests "test")))
