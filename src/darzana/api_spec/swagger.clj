@@ -102,13 +102,20 @@
          (string/join "&")
          not-empty)))
 
+(defn replace-default-variables [url variables]
+  (string/replace url #"\{([A-Za-z_]\w*)\}"
+                  #(some-> (.get variables (second %))
+                           (.getDefault))))
+
 (defn build-url [swagger operation path context]
   (let [server (first (.getServers swagger))
+        server-variables (.getVariables server)
         query-string (build-query-string operation swagger context)]
-    (str (.getUrl server)
+    (str (-> (.getUrl server)
+             (replace-url-variables context)
+             (replace-default-variables server-variables))
          (replace-url-variables path context)
          (when query-string (str "?" query-string)))))
-
 
 (defn build-request-body [swagger operation context]
   (let [content-type (or (some-> (.getRequestBody operation)
@@ -151,7 +158,7 @@
 (defrecord SwaggerModel [apis logger]
   api-spec/ApiSpec
   (build-request [{:keys [apis]} {:keys [id path method]} context]
-    (when-let [operation (get-operation apis id path method)]
+    (if-let [operation (get-operation apis id path method)]
       (let [request {:url (build-url (get apis id) operation path context)
                      :method method
                      :headers (build-request-headers (get apis id) operation method context)
