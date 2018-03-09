@@ -12,5 +12,5 @@
 
 (defn scopes [context]
   (when-let [logger (get-in context [:runtime :logger])]
-    (logger/log logger :info ::scopes (get-in context [:scope])))
+    (logger/log logger :report ::scopes (get-in context [:scope])))
   context)

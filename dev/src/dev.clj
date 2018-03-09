@@ -12,8 +12,11 @@
 
 (duct/load-hierarchy)
 
-(defn read-config []
-  (duct/read-config "dev/resources/dev.edn"))
+(defn read-config
+  ([] (read-config "dev/resources/dev.edn"))
+  ([config-file]
+   (integrant.repl/set-prep!
+    #(duct/prep (duct/read-config config-file)))))
 
 (defn test []
   (eftest/run-tests (eftest/find-tests "test")))
@@ -22,5 +25,3 @@
 
 (when (io/resource "local.clj")
   (load "local"))
-
-(integrant.repl/set-prep! (comp duct/prep read-config))
