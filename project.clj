@@ -23,7 +23,7 @@
 
                  [javax.cache/cache-api "1.0.0"]
 
-                 [io.swagger/swagger-parser "2.0.0-rc1"]
+                 [io.swagger.parser.v3/swagger-parser-v3 "2.0.0-rc3"]
                  [com.github.jknack/handlebars "4.0.6"]
                  [org.freemarker/freemarker "2.3.27-incubating"]
                  [com.squareup.okhttp3/okhttp "3.9.1"]
@@ -44,9 +44,9 @@
           :repl-options {:init-ns user}}
    :uberjar {:aot :all}
    :profiles/dev  {}
-   :project/dev   {:dependencies [[integrant/repl "0.3.0"]
+   :project/dev   {:dependencies [[integrant/repl "0.3.1"]
                                   [org.jsr107.ri/cache-ri-impl "1.0.0"]
-                                  [eftest "0.4.3"]
+                                  [eftest "0.5.0"]
                                   [org.clojure/test.check "0.9.0"]
                                   [kerodon "0.9.0"]]
                    :source-paths   ["dev/src"]

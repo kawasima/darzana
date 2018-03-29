@@ -1,4 +1,7 @@
-(control/defroute "pet" :get
-  (mapper/read-value {:from :params} {:var :pet :type io.swagger.model.Pet})
-  (api/call-api {:id :petshop :path "/pet" :method :post})
-  (renderer/render {:template "/petstore/updated"}))
+(control/defroute ["post/" :id]  :get
+  (api/call-api {:id :jsonplaceholder
+                 :path "/posts/{id}"
+                 :method :get
+                 :var "post"})
+  (log/scopes)
+  (renderer/render {:template "/posts/show.ftlh"}))

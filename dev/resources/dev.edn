@@ -2,7 +2,7 @@
 
  :duct.core/include ["darzana/config"]
  :darzana.api-spec/swagger {:swagger-path "dev/resources/swagger"}
- :darzana.template/handlebars {:template-path "dev/resources/hbs"}
+ :darzana.template/freemarker {:template-path "dev/resources/ftl"}
  :darzana.http-client/okhttp {}
  :darzana/runtime {:routes-path "dev/resources/scripts"}
 }

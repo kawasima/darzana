@@ -8,9 +8,9 @@
             [clojure.java.io :as io]
             [ring.util.codec :refer [url-encode]])
   (:import [java.io File FileFilter]
-           [io.swagger.parser OpenAPIParser]
-           [io.swagger.parser.models ParseOptions]
-           [io.swagger.oas.models PathItem$HttpMethod]))
+           [io.swagger.v3.parser OpenAPIV3Parser]
+           [io.swagger.v3.parser.core.models ParseOptions]
+           [io.swagger.v3.oas.models PathItem$HttpMethod]))
 
 (defn replace-url-variables [url context]
   (string/replace url #"\{([A-Za-z_]\w*)\}"
@@ -39,12 +39,12 @@
 
 (defmulti build-model (fn [model swagger context ks] (class model)))
 
-(defmethod build-model io.swagger.oas.models.media.StringSchema
+(defmethod build-model io.swagger.v3.oas.models.media.StringSchema
   [model swagger context ks]
   (when ks
     (get-in context (into [:scope] ks))))
 
-(defmethod build-model io.swagger.oas.models.media.IntegerSchema
+(defmethod build-model io.swagger.v3.oas.models.media.IntegerSchema
   [schema swagger context ks]
   (some-> ks
           (#(get-in context (into [:scope] %)))
@@ -53,7 +53,7 @@
                (Integer/parseInt v)
                (Long/parseLong v))))))
 
-(defmethod build-model io.swagger.oas.models.media.NumberSchema
+(defmethod build-model io.swagger.v3.oas.models.media.NumberSchema
   [schema swagger context ks]
   (some-> ks
           (#(get-in context (into [:scope] %)))
@@ -62,14 +62,14 @@
                (Float/parseFloat v)
                (Double/parseDouble v))))))
 
-(defmethod build-model io.swagger.oas.models.media.DateSchema
+(defmethod build-model io.swagger.v3.oas.models.media.DateSchema
   [model swagger context ks]
   (some-> ks
           (#(get-in context (into [:scope] %)))
           ((fn [v]
              v))))
 
-(defmethod build-model io.swagger.oas.models.media.ObjectSchema
+(defmethod build-model io.swagger.v3.oas.models.media.ObjectSchema
   [model swagger context ks]
   (->> (.getProperties model)
        (map (fn [[k v]]
@@ -77,7 +77,7 @@
                 [k (build-model v swagger context vkey)])))
        (into {})))
 
-(defmethod build-model io.swagger.oas.models.media.ArraySchema
+(defmethod build-model io.swagger.v3.oas.models.media.ArraySchema
   [schema swagger context ks]
   (->> (.getItems schema)
        (map #(build-model % context ks))))
@@ -172,7 +172,7 @@
       (keyword (str (name id) "-" (clojure.string/replace path #"/" "-") "-" (name method))))))
 
 (defmethod ig/init-key :darzana.api-spec/swagger [_ {:keys [swagger-path logger]}]
-  (let [parser (OpenAPIParser.)
+  (let [parser (OpenAPIV3Parser.)
         apis (some->> (io/file swagger-path)
                       (file-seq)
                       (filter #(and (or (.endsWith (.getName %) ".json")
